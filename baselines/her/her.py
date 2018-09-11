@@ -39,6 +39,7 @@ def make_sample_her_transitions(replay_strategy, replay_k, reward_fun):
         # Replace goal with achieved goal but only for the previously-selected
         # HER transitions (as defined by her_indexes). For the other transitions,
         # keep the original goal.
+        # NOTE: HER transitions g <- ag
         future_ag = episode_batch['ag'][episode_idxs[her_indexes], future_t]
         transitions['g'][her_indexes] = future_ag
 

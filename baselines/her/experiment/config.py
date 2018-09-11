@@ -2,8 +2,9 @@ import numpy as np
 import gym
 
 from baselines import logger
-from baselines.her.ddpg import DDPG
+from baselines.her.ddpg import DDPG, addnl_loss_term_noop
 from baselines.her.her import make_sample_her_transitions
+from baselines.her.fwrl import addnl_loss_term_fwrl
 
 
 DEFAULT_ENV_PARAMS = {
@@ -44,6 +45,7 @@ DEFAULT_PARAMS = {
     # normalization
     'norm_eps': 0.01,  # epsilon used for observation normalization
     'norm_clip': 5,  # normalized observations are cropped to this values
+    'addnl_loss_term': 'noop',  # Use an additional loss term supported modes: noop or fwrl
 }
 
 
@@ -81,12 +83,10 @@ def prepare_params(kwargs):
         kwargs['pi_lr'] = kwargs['lr']
         kwargs['Q_lr'] = kwargs['lr']
         del kwargs['lr']
-    for name in ['buffer_size', 'hidden', 'layers',
-                 'network_class',
-                 'polyak',
-                 'batch_size', 'Q_lr', 'pi_lr',
-                 'norm_eps', 'norm_clip', 'max_u',
-                 'action_l2', 'clip_obs', 'scope', 'relative_goals']:
+    for name in ['buffer_size', 'hidden', 'layers', 'network_class', 'polyak',
+                 'batch_size', 'Q_lr', 'pi_lr', 'norm_eps', 'norm_clip',
+                 'max_u', 'action_l2', 'clip_obs', 'scope', 'relative_goals',
+                 'addnl_loss_term']:
         ddpg_params[name] = kwargs[name]
         kwargs['_' + name] = kwargs[name]
         del kwargs[name]
@@ -125,6 +125,12 @@ def simple_goal_subtract(a, b):
     return a - b
 
 
+def addnl_loss_term_from_str(key,
+                             available=dict(noop=addnl_loss_term_noop,
+                                            fwrl=addnl_loss_term_fwrl)):
+    return available[key]
+
+
 def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
     sample_her_transitions = configure_her(params)
     # Extract relevant parameters.
@@ -146,6 +152,8 @@ def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
                         'sample_transitions': sample_her_transitions,
                         'gamma': gamma,
                         })
+    ddpg_params['addnl_loss_term'] = addnl_loss_term_from_str(
+        ddpg_params['addnl_loss_term'])
     ddpg_params['info'] = {
         'env_name': params['env_name'],
     }

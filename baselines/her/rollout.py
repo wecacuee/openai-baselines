@@ -103,6 +103,10 @@ class RolloutWorker:
                 try:
                     # We fully ignore the reward here because it will have to be re-computed
                     # for HER.
+                    # NOTE: the environments return
+                    # dict(observation=xx, achieved_goal=xx, desired_goal=xx)
+                    # the dimensions of observation and achieved_goals are
+                    # different.
                     curr_o_new, _, _, info = self.envs[i].step(u[i])
                     if 'is_success' in info:
                         success[i] = info['is_success']
@@ -113,6 +117,7 @@ class RolloutWorker:
                     if self.render:
                         self.envs[i].render()
                 except MujocoException as e:
+                    print("ERROR:::: MujocoException {}".format(e))
                     return self.generate_rollouts()
 
             if np.isnan(o_new).any():
@@ -131,6 +136,9 @@ class RolloutWorker:
         achieved_goals.append(ag.copy())
         self.initial_o[:] = o
 
+        # NOTE: The dimensions of obs are time, ith environment and
+        # dimensionality of observation obs[t ∈ T, i ∈ envs, ...]
+        # NOTE: obs, action, goal, achieved_goals per step
         episode = dict(o=obs,
                        u=acts,
                        g=goals,
@@ -147,6 +155,9 @@ class RolloutWorker:
             self.Q_history.append(np.mean(Qs))
         self.n_episodes += self.rollout_batch_size
 
+        # NOTE: Dimensions are swapped here:
+        # The dimensions of obs are ith environment (Batch), time step and
+        # obs[i ∈ envs, t ∈ T, ...]
         return convert_episode_to_batch_major(episode)
 
     def clear_history(self):

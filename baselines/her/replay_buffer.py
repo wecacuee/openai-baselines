@@ -44,6 +44,19 @@ class ReplayBuffer:
             for key in self.buffers.keys():
                 buffers[key] = self.buffers[key][:self.current_size]
 
+        # NOTE: 'o_2' and 'ag_2' are defined for the first time
+        # NOTE: What are the three dimensions of 'o' and 'ag'
+        # NOTE: Batch, time-step and the observation dim
+        # NOTE: What does the achieved goal look like? Is it a repeated copy of
+        # the goal? The environment returns it.
+        # The goal space is different from the state space. For example, if
+        # desired goal is in the form of 3D position of tip of the robotic
+        # hand, then achieved goal is the current 3D position of the tip.
+        # So achieved goal is a part of state description that is easier to
+        # compare to the desired goal.
+        # NOTE: o_2's second dim is size one smaller than o
+        # NOTE: how is 'ag' used as input to the networks?
+        # Only through HER when it replaces the goals with achieved goals.
         buffers['o_2'] = buffers['o'][:, 1:, :]
         buffers['ag_2'] = buffers['ag'][:, 1:, :]
 

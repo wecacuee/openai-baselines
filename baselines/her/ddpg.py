@@ -1,3 +1,4 @@
+from functools import partial
 from collections import OrderedDict
 
 import numpy as np
@@ -16,12 +17,32 @@ def dims_to_shapes(input_dims):
     return {key: tuple([val]) if val > 0 else tuple() for key, val in input_dims.items()}
 
 
+def addnl_loss_term_noop(inputs, target_net_fn, main_net_fn):
+    """Returns a loss term as a function of inputs reusing the variables from
+       variable_scope
+
+    TODO: Decide on the interface
+    """
+    return tf.zeros((0,))
+
+
+def with_scope_create_net(net_creator, inputs, variable_scope="",
+                          attr="Q_tf"):
+    with tf.variable_scope(variable_scope) as vs:
+        vs.reuse_variables()
+        ret = getattr(net_creator(inputs), attr)
+        vs.reuse_variables()
+        return ret
+
+
 class DDPG(object):
     @store_args
     def __init__(self, input_dims, buffer_size, hidden, layers, network_class, polyak, batch_size,
                  Q_lr, pi_lr, norm_eps, norm_clip, max_u, action_l2, clip_obs, scope, T,
                  rollout_batch_size, subtract_goals, relative_goals, clip_pos_returns, clip_return,
-                 sample_transitions, gamma, reuse=False, **kwargs):
+                 sample_transitions, gamma, reuse=False,
+                 addnl_loss_term=addnl_loss_term_noop,
+                 **kwargs):
         """Implementation of DDPG that is used in combination with Hindsight Experience Replay (HER).
 
         Args:
@@ -96,6 +117,9 @@ class DDPG(object):
         return np.random.uniform(low=-self.max_u, high=self.max_u, size=(n, self.dimu))
 
     def _preprocess_og(self, o, ag, g):
+        # NOTE: goal is g <- g - ag
+        # conditioned on relative_goals which is False in DEFAULT_PARAMS
+        # NOTE: ag is ignored if relative_goals is False
         if self.relative_goals:
             g_shape = g.shape
             g = g.reshape(-1, self.dimg)
@@ -258,6 +282,15 @@ class DDPG(object):
             if reuse:
                 vs.reuse_variables()
             target_batch_tf = batch_tf.copy()
+            # NOTE: What is o_2 and g_2. Why replace inputs for target network?
+            # NOTE: o_2 and g_2 are just next step observations and next step
+            # goals?
+            # o_2 = o_{t+1} if o = o_{t}
+            # TODO: If we understand o_2 and g_2 right, then why target
+            # networks get them as inputs?
+            # Oh !! because of the bellman equation where the target network
+            # gets evaluated on the next state. It is interesting that we need
+            # g_2 for that.
             target_batch_tf['o'] = batch_tf['o_2']
             target_batch_tf['g'] = batch_tf['g_2']
             self.target = self.create_actor_critic(
@@ -266,12 +299,39 @@ class DDPG(object):
         assert len(self._vars("main")) == len(self._vars("target"))
 
         # loss functions
+        # Qₜ(s', μ(s',a'))
         target_Q_pi_tf = self.target.Q_pi_tf
         clip_range = (-self.clip_return, 0. if self.clip_pos_returns else np.inf)
+        # target_tf = r + γ Qₜ(s', μ(s',a'))
         target_tf = tf.clip_by_value(batch_tf['r'] + self.gamma * target_Q_pi_tf, *clip_range)
+        # Q_loss_tf = (r + γ Qₜ(s', μ(s', a')) - Qₒ(s, δ(a)))²
         self.Q_loss_tf = tf.reduce_mean(tf.square(tf.stop_gradient(target_tf) - self.main.Q_tf))
+        # NOTE: Does the AddnlLossTerm gets added to both pi_loss_tf and
+        # Q_loss_tf or only Q_loss_tf?
+        # Ans: No. pi_loss_tf is generic. It is not affected by FW.
+        self.Q_loss_tf += self.addnl_loss_term(
+            batch_tf,
+            target_net_fn = partial(
+                with_scope_create_net,
+                net_creator=partial(self.create_actor_critic,
+                                    net_type='target', **self.__dict__),
+                variable_scope="target"),
+            main_net_fn = partial(
+                with_scope_create_net,
+                net_creator=partial(self.create_actor_critic,
+                                    net_type='main', **self.__dict__),
+                variable_scope="main"))
+        # NOTE: Why are there separate objective functions for pi and Q?
+        # Because the pi loss term makes sure that only pi parameters are in
+        # the objective. It selectively optimizes pi parameters.
+        # NOTE: vars('main/pi') and vars('main/Q') are exclusive
+        # Q_pi_tf = Qₜ(s, μ(s,a))
         self.pi_loss_tf = -tf.reduce_mean(self.main.Q_pi_tf)
+        # pi_loss_tf = -Qₜ(s, μ(s,a)) + 1.0*(μ(s, a))²
         self.pi_loss_tf += self.action_l2 * tf.reduce_mean(tf.square(self.main.pi_tf / self.max_u))
+        # More loss term and more grads term
+        # self.FW_loss_tf = tf.reduce_mean(tf.relu(Q_t(o, ag')+Q_t(o',g) - Q_main(o, g)))
+        # FW_grads_tf = tf.gradients(self.FW_loss_tf, self._vars('main/Q'))
         Q_grads_tf = tf.gradients(self.Q_loss_tf, self._vars('main/Q'))
         pi_grads_tf = tf.gradients(self.pi_loss_tf, self._vars('main/pi'))
         assert len(self._vars('main/Q')) == len(Q_grads_tf)
@@ -280,6 +340,10 @@ class DDPG(object):
         self.pi_grads_vars_tf = zip(pi_grads_tf, self._vars('main/pi'))
         self.Q_grad_tf = flatten_grads(grads=Q_grads_tf, var_list=self._vars('main/Q'))
         self.pi_grad_tf = flatten_grads(grads=pi_grads_tf, var_list=self._vars('main/pi'))
+        # TODO: add optional triangular inequality
+        # main.Q_tf(o, g) >= target.Q_pi_tf(o, ach_goal(o')) + target.Q_pi_tf(o', g)
+        # You can probably create Q_pi_tf from within the batch using o, o_2, g, g_2
+        # o -> o_2  g -> g_2?
 
         # optimizers
         self.Q_adam = MpiAdam(self._vars('main/Q'), scale_grad_by_procs=False)

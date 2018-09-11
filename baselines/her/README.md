@@ -30,3 +30,36 @@ python -m baselines.her.experiment.train --num_cpu 19
 This will require a machine with sufficient amount of physical CPU cores. In our experiments,
 we used [Azure's D15v2 instances](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes),
 which have 20 physical cores. We only scheduled the experiment on 19 of those to leave some head-room on the system.
+
+## Algorithm
+
+``` python
+A = an off-policy RL algorithm : DDPG
+S = A strategy for sampling goals for replay
+r = a reward function r: S x A x G -> R
+R = Replay buffer
+
+for epoch in  range(1, EPOCHS):
+    for episodes in range(1, EPISODES):
+        g = Sample random goal status
+        st_0 = Sample initial status
+
+        for t = 0..T-1:
+            a_t = Sample action using epsilon greedy policy according to actor policy
+            s_{t+1} = Observe state and reward after action a_t on state s_t with goal g
+
+        For t = 0..T-1:
+            R.append( (s_t || g, a_t, r(s_t, a_t, g), s_{t+1} || g) )
+
+            Sample a set of additional goals for replay G := S(current episode)
+            for g' in G:
+                R.append((s_t || g', a_t, r(s_t, a_t, g'), s_{t+1} || g') )
+
+    for t in range(1, TRAIN):
+        MB = Sample a minibatch from B
+        Perform an optimization step on critic policy using MB
+
+    If K epoch has passed since last actor update:
+        Update actor weights with critic weights
+```
+
