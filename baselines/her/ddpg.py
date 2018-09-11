@@ -20,10 +20,15 @@ def dims_to_shapes(input_dims):
 def addnl_loss_term_noop(inputs, target_net_fn, main_net_fn):
     """Returns a loss term as a function of inputs reusing the variables from
        variable_scope
-
-    TODO: Decide on the interface
     """
-    return tf.zeros((0,))
+    # NOTE: does NOT works with
+    # return tf.zeros((0,))
+    # NOTE: works with
+    return 0
+    # NOTE: works with
+    # return tf.constant(0.0)
+    # NOTE: works with
+    # return tf.zeros((1,))
 
 
 def with_scope_create_net(net_creator, inputs, variable_scope="",
