@@ -45,7 +45,7 @@ DEFAULT_PARAMS = {
     # normalization
     'norm_eps': 0.01,  # epsilon used for observation normalization
     'norm_clip': 5,  # normalized observations are cropped to this values
-    'addnl_loss_term': 'noop',  # Use an additional loss term supported modes: noop or fwrl
+    'addnl_loss_term': 'fwrl',  # Use an additional loss term supported modes: noop or fwrl
 }
 
 

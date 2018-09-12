@@ -31,7 +31,7 @@ This will require a machine with sufficient amount of physical CPU cores. In our
 we used [Azure's D15v2 instances](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes),
 which have 20 physical cores. We only scheduled the experiment on 19 of those to leave some head-room on the system.
 
-## Algorithm
+### Algorithm
 
 ``` python
 A = an off-policy RL algorithm : DDPG
@@ -63,3 +63,12 @@ for epoch in  range(1, EPOCHS):
         Update actor weights with critic weights
 ```
 
+
+## FWRL
+* DONE: FIXME
+
+```
+  File "/home/dhiman/wrk/floyd-warshall-rl/ext/openai-baselines/baselines/her/fwrl.py", line 28, in addnl_loss_term_fwrl
+    assert k in batch_tf, "no key {} in batch_tf".format(k)
+AssertionError: no key ag in batch_tf
+```

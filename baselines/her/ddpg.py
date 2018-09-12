@@ -31,13 +31,30 @@ def addnl_loss_term_noop(inputs, target_net_fn, main_net_fn):
     # return tf.zeros((1,))
 
 
-def with_scope_create_net(net_creator, inputs, variable_scope="",
-                          attr="Q_tf"):
+def with_scope_create_net(net_creator, inputs, variable_scope=""):
     with tf.variable_scope(variable_scope) as vs:
         vs.reuse_variables()
-        ret = getattr(net_creator(inputs), attr)
+        ret = net_creator(inputs)
         vs.reuse_variables()
         return ret
+
+
+def stage_shapes_frm_input_dims(input_dims):
+    # Prepare staging area for feeding data to the model.
+    # NOTE: input_dims.keys() are ['o', 'g', 'u', 'info_*' ...]
+
+    input_shapes = dims_to_shapes(input_dims)
+    stage_shapes = OrderedDict()
+    for key in sorted(input_dims.keys()):
+        if key.startswith('info_'):
+            continue
+        stage_shapes[key] = (None, *input_shapes[key])
+    for key in ['o', 'g']:
+        stage_shapes[key + '_2'] = stage_shapes[key]
+    stage_shapes['r'] = (None,)
+    stage_shapes['ag'] = (None, *input_shapes['g'])
+    stage_shapes['ag_2'] = (None, *input_shapes['g'])
+    return stage_shapes
 
 
 class DDPG(object):
@@ -87,15 +104,7 @@ class DDPG(object):
         self.dimg = self.input_dims['g']
         self.dimu = self.input_dims['u']
 
-        # Prepare staging area for feeding data to the model.
-        stage_shapes = OrderedDict()
-        for key in sorted(self.input_dims.keys()):
-            if key.startswith('info_'):
-                continue
-            stage_shapes[key] = (None, *input_shapes[key])
-        for key in ['o', 'g']:
-            stage_shapes[key + '_2'] = stage_shapes[key]
-        stage_shapes['r'] = (None,)
+        stage_shapes = stage_shapes_frm_input_dims(self.input_dims)
         self.stage_shapes = stage_shapes
 
         # Create network.
@@ -104,7 +113,8 @@ class DDPG(object):
                 dtypes=[tf.float32 for _ in self.stage_shapes.keys()],
                 shapes=list(self.stage_shapes.values()))
             self.buffer_ph_tf = [
-                tf.placeholder(tf.float32, shape=shape) for shape in self.stage_shapes.values()]
+                tf.placeholder(tf.float32, shape=shape)
+                for shape in self.stage_shapes.values()]
             self.stage_op = self.staging_tf.put(self.buffer_ph_tf)
 
             self._create_network(reuse=reuse)
@@ -214,12 +224,15 @@ class DDPG(object):
         self.pi_adam.update(pi_grad, self.pi_lr)
 
     def sample_batch(self):
+        # NOTE: Q: What are keys in transitions?
+        #       A: ['r', 'o_2', 'ag_2', 'ag', 'g', 'o']
         transitions = self.buffer.sample(self.batch_size)
         o, o_2, g = transitions['o'], transitions['o_2'], transitions['g']
         ag, ag_2 = transitions['ag'], transitions['ag_2']
         transitions['o'], transitions['g'] = self._preprocess_og(o, ag, g)
         transitions['o_2'], transitions['g_2'] = self._preprocess_og(o_2, ag_2, g)
 
+        # NOTE: The stage_shapes.keys() are ['r', 'u', 'o', 'o_2', 'g', 'g_2']
         transitions_batch = [transitions[key] for key in self.stage_shapes.keys()]
         return transitions_batch
 
