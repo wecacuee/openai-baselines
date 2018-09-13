@@ -176,6 +176,7 @@ def launch(
         evaluator=evaluator, n_epochs=n_epochs, n_test_rollouts=params['n_test_rollouts'],
         n_cycles=params['n_cycles'], n_batches=params['n_batches'],
         policy_save_interval=policy_save_interval, save_policies=save_policies)
+    return params
 
 
 @click.command()
@@ -192,7 +193,7 @@ def launch(
 @click.option('--addnl_loss_term', type=click.Choice(['fwrl', 'noop']),
               default='fwrl', help='what additional loss term to include')
 def main(**kwargs):
-    launch(**kwargs)
+    return launch(**kwargs)
 
 
 if __name__ == '__main__':
