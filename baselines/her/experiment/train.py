@@ -187,6 +187,8 @@ def launch(
 @click.option('--policy_save_interval', type=int, default=5, help='the interval with which policy pickles are saved. If set to 0, only the best and latest policy will be pickled.')
 @click.option('--replay_strategy', type=click.Choice(['future', 'none']), default='future', help='the HER replay strategy to be used. "future" uses HER, "none" disables HER.')
 @click.option('--clip_return', type=int, default=1, help='whether or not returns should be clipped')
+@click.option('--addnl_loss_term', type=click.Choice(['fwrl', 'noop']),
+              default='fwrl', help='what additional loss term to include')
 def main(**kwargs):
     launch(**kwargs)
 
