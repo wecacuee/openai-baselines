@@ -1,15 +1,19 @@
 if __package__ is None:
     __package__ = "baselines.her.experiment"
 from itertools import product
+from functools import partial
+from subprocess import check_call
+from pathlib import Path
+import sys
 
 from .config import DEFAULT_PARAMS
 from .train import launch
-from .results_plotter import plot_rewards
+from ..results_plotter import plot_results
 
 
 def config_variations(
-        keys = ["env_name", "addnl_loss_term"],
-        env_name = ["FetchReach-v1", "FetchPush-v0", "FetchSlide-v0"],
+        keys = ["env", "addnl_loss_term"],
+        env = ["FetchReach-v1", "FetchPush-v0", "FetchSlide-v0"],
         addnl_loss_term = ["fwrl", "noop"]):
     kwargs = locals()
     return {k: kwargs[k] for k in keys}
@@ -26,16 +30,23 @@ def config_many(config_vars):
             for k, conf in config_vars_to_configs(config_vars).items()}
 
 
+def call_train(**conf):
+    cmd = ([sys.executable, str(Path(__file__).parent / "train.py")] +
+                      sum([["--" + k, str(v)] for k, v in conf.items()], []))
+    print("Calling {}".format("' '".join(cmd)))
+    return check_call(cmd)
+
+
 def train_many(**kwargs):
     logdirs = []
     for confname, conf in config_many(config_variations()).items():
         conf.update(dict(confname = confname))
         conf.update(kwargs)
-        params = launch(**dict(DEFAULT_PARAMS, **conf))
-        logdirs.append(params['logdir'].format(**params))
-    plot_rewards(logdirs)
+        call_train(**conf)
+        logdirs.append(DEFAULT_PARAMS['logdir'].format(**dict(DEFAULT_PARAMS, **conf)))
+    plot_results(logdirs)
 
 
-main = train_many
+main = partial(train_many, num_cpu = 6)
 if __name__ == '__main__':
     main()

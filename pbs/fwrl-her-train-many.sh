@@ -20,5 +20,8 @@ git clone $MID_DIR/git/ $PROJNAME
 cd $PROJNAME
 git pull
 . setup.sh
-python -m baselines.her.experiment.train --num_cpu 6
+python <<EOF
+from baselines.her.experiment.train_many import main
+main()
+EOF
 echo "end of pbs script"

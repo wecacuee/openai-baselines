@@ -83,7 +83,6 @@ DEFAULT_PARAMS = {
     'confname': '{env_name}-{addnl_loss_term}'.format,
     'logdir': "{mid_dir}/{project_name}/{gitrev}-{confname}",
     'n_epochs': 50,
-    'num_cpu': 1,
     'seed': 0,
     'replay_strategy': 'future',
     'policy_save_interval': 5,
