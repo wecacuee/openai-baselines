@@ -1,6 +1,9 @@
+from functools import partial, wraps
 import os
 import subprocess
 from pathlib import Path
+from collections import Callable
+from inspect import signature, Parameter
 
 import numpy as np
 import gym
@@ -9,6 +12,21 @@ from baselines import logger
 from baselines.her.ddpg import DDPG, addnl_loss_term_noop
 from baselines.her.her import make_sample_her_transitions
 from baselines.her.fwrl import addnl_loss_term_fwrl
+
+
+def ignore_extrakw(f):
+    """Avoid exceptions like "Got unexpected keyword argument"
+    """
+    @wraps(f)
+    def wrapper(**kw):
+        params = signature(f).parameters
+        if any((p.kind == Parameter.VAR_KEYWORD) for p in params):
+            pass_args = kw
+        else:
+            need_args = [p.name for p in params]
+            pass_args = {k: kw[k] for k in need_args if k in kw}
+        return f(**pass_args)
+    return wrapper
 
 
 def git_revision(dir_):
@@ -55,9 +73,21 @@ DEFAULT_PARAMS = {
     'norm_eps': 0.01,  # epsilon used for observation normalization
     'norm_clip': 5,  # normalized observations are cropped to this values
     'addnl_loss_term': 'fwrl',  # Use an additional loss term supported modes: noop or fwrl
-    'mid_dir': '/z/home/{USER}/mid'.format(USER=os.environ['USER']),
+    'user': os.environ['USER'],
+    'mid_dir': '/z/home/{user}/mid'.format,
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
-    'gitrev': git_revision(Path(__file__).absolute().parent)
+    'gitrev': ignore_extrakw(
+        partial(git_revision,
+                Path(__file__).absolute().parent)),
+    'env' : "FetchReach-v1",
+    'confname': '{env_name}-{addnl_loss_term}'.format,
+    'logdir': "{mid_dir}/{project_name}/{gitrev}-{confname}",
+    'n_epochs': 50,
+    'num_cpu': 1,
+    'seed': 0,
+    'replay_strategy': 'future',
+    'policy_save_interval': 5,
+    'clip_return': True
 }
 
 
@@ -74,6 +104,12 @@ def cached_make_env(make_env):
         env = make_env()
         CACHED_ENVS[make_env] = env
     return CACHED_ENVS[make_env]
+
+
+def preprocess_params(params):
+    for k, v in params.items():
+        params[k] = v(**params) if isinstance(v, Callable) else v
+    return params
 
 
 def prepare_params(kwargs):

@@ -109,6 +109,7 @@ def launch(
     if env in config.DEFAULT_ENV_PARAMS:
         params.update(config.DEFAULT_ENV_PARAMS[env])  # merge env-specific parameters in
     params.update(**override_params)  # makes it possible to override any parameter
+    config.preprocess_params(params)
 
     # Configure logging
     if rank == 0:

@@ -4,6 +4,7 @@ if __package__ is None:
 from functools import partial, reduce, wraps
 
 import sys
+import os
 import os.path as osp
 from pathlib import Path
 from glob import glob
@@ -77,7 +78,8 @@ def plot_results(
         plt.ylabel(metric)
         plt.title(metric)
         plt.legend()
-        plt.show()
+        if os.environ.get("DISPLAY") == ":0":
+            plt.show()
         path = Path(osp.join(d, metric + ".pdf"))
         path.parent.mkdir(parents=True, exist_ok=True)
         print("Saving plot to {}".format(path))
