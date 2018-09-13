@@ -1,10 +1,11 @@
-if __package__ is None:
-    __package__ = "baselines.her.experiment"
 from itertools import product
 from functools import partial
 from subprocess import check_call
 from pathlib import Path
 import sys
+
+if __package__ is None:
+    __package__ = "baselines.her.experiment"
 
 from .config import DEFAULT_PARAMS
 from .train import launch
@@ -21,29 +22,25 @@ def config_variations(
 
 def config_vars_to_configs(config_vars):
     config_keys, config_vals = zip(*config_vars.items())
-    return { "-".join(vlist): dict(zip(config_keys, vlist))
-             for vlist in product(*config_vals)}
-
-
-def config_many(config_vars):
-    return {k: conf
-            for k, conf in config_vars_to_configs(config_vars).items()}
+    return {"-".join(vlist): dict(zip(config_keys, vlist))
+            for vlist in product(*config_vals)}
 
 
 def call_train(**conf):
     cmd = ([sys.executable, str(Path(__file__).parent / "train.py")] +
-                      sum([["--" + k, str(v)] for k, v in conf.items()], []))
+           sum([["--" + k, str(v)] for k, v in conf.items()], []))
     print("Calling {}".format("' '".join(cmd)))
     return check_call(cmd)
 
 
 def train_many(**kwargs):
     logdirs = []
-    for confname, conf in config_many(config_variations()).items():
+    for confname, conf in config_vars_to_configs(config_variations()).items():
         conf.update(dict(confname = confname))
         conf.update(kwargs)
         call_train(**conf)
-        logdirs.append(DEFAULT_PARAMS['logdir'].format(**dict(DEFAULT_PARAMS, **conf)))
+        logdirs.append(
+            DEFAULT_PARAMS['logdir'].format(**dict(DEFAULT_PARAMS, **conf)))
     plot_results(logdirs)
 
 
