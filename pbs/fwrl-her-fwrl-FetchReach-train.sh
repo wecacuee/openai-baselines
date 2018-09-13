@@ -20,5 +20,5 @@ git clone $MID_DIR/git/ $PROJNAME
 cd $PROJNAME
 git pull
 . setup.sh
-python -m baselines.her.experiment.train --num_cpu 6 --addnl_loss_term noop.
+python -m baselines.her.experiment.train --num_cpu 6 --addnl_loss_term noop
 echo "end of pbs script"
