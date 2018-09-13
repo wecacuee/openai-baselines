@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import gym
 
@@ -46,6 +48,8 @@ DEFAULT_PARAMS = {
     'norm_eps': 0.01,  # epsilon used for observation normalization
     'norm_clip': 5,  # normalized observations are cropped to this values
     'addnl_loss_term': 'fwrl',  # Use an additional loss term supported modes: noop or fwrl
+    'mid_dir': '/z/home/{USER}/mid'.format(USER=os.environ['USER']),
+    'project_name' : 'floyd-warshall-rl/openai-baselines/her',
 }
 
 

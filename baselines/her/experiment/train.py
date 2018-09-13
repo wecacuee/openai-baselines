@@ -1,5 +1,6 @@
 import os
 import sys
+from collections import Callable
 
 import click
 import numpy as np
@@ -100,10 +101,18 @@ def launch(
         U.single_threaded_session().__enter__()
     rank = MPI.COMM_WORLD.Get_rank()
 
+    # Prepare params.
+    params = config.DEFAULT_PARAMS
+    params['env_name'] = env
+    params['replay_strategy'] = replay_strategy
+    if env in config.DEFAULT_ENV_PARAMS:
+        params.update(config.DEFAULT_ENV_PARAMS[env])  # merge env-specific parameters in
+    params.update(**override_params)  # makes it possible to override any parameter
+
     # Configure logging
     if rank == 0:
         if logdir or logger.get_dir() is None:
-            logger.configure(dir=logdir)
+            logger.configure(dir=logdir.format(**params))
     else:
         logger.configure()
     logdir = logger.get_dir()
@@ -114,13 +123,6 @@ def launch(
     rank_seed = seed + 1000000 * rank
     set_global_seeds(rank_seed)
 
-    # Prepare params.
-    params = config.DEFAULT_PARAMS
-    params['env_name'] = env
-    params['replay_strategy'] = replay_strategy
-    if env in config.DEFAULT_ENV_PARAMS:
-        params.update(config.DEFAULT_ENV_PARAMS[env])  # merge env-specific parameters in
-    params.update(**override_params)  # makes it possible to override any parameter
     with open(os.path.join(logger.get_dir(), 'params.json'), 'w') as f:
         json.dump(params, f)
     params = config.prepare_params(params)
@@ -176,7 +178,9 @@ def launch(
 
 @click.command()
 @click.option('--env', type=str, default='FetchReach-v1', help='the name of the OpenAI Gym environment that you want to train on')
-@click.option('--logdir', type=str, default=None, help='the path to where logs and policy pickles should go. If not specified, creates a folder in /tmp/')
+@click.option('--logdir', type=str,
+              default="{mid_dir}/{project_name}/{env_name}_{addnl_loss_term}",
+              help='the path to where logs and policy pickles should go. If not specified, creates a folder in /tmp/')
 @click.option('--n_epochs', type=int, default=50, help='the number of training epochs to run')
 @click.option('--num_cpu', type=int, default=1, help='the number of CPU cores to use (using MPI)')
 @click.option('--seed', type=int, default=0, help='the random seed used to seed both the environment and the training code')
