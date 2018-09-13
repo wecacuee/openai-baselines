@@ -14,7 +14,8 @@ from ..results_plotter import plot_results
 
 def config_variations(
         keys = ["env", "addnl_loss_term"],
-        env = ["FetchReach-v1", "FetchPush-v0", "FetchSlide-v0"],
+        env = [#"FetchReach-v1",
+               "FetchPush-v1", "FetchSlide-v1"],
         addnl_loss_term = ["fwrl", "noop"]):
     kwargs = locals()
     return {k: kwargs[k] for k in keys}
