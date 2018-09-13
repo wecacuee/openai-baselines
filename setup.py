@@ -35,7 +35,9 @@ setup(name='baselines',
           'cloudpickle',
           'tensorflow>=1.4.0',
           'click',
-          'opencv-python'
+          'pandas>=0.23',
+          'opencv-python',
+          'matplotlib>=2.2'
       ],
       extras_require=extras,
       description='OpenAI baselines: high quality implementations of reinforcement learning algorithms',

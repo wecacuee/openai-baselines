@@ -1,4 +1,6 @@
 import os
+import subprocess
+from pathlib import Path
 
 import numpy as np
 import gym
@@ -7,6 +9,11 @@ from baselines import logger
 from baselines.her.ddpg import DDPG, addnl_loss_term_noop
 from baselines.her.her import make_sample_her_transitions
 from baselines.her.fwrl import addnl_loss_term_fwrl
+
+
+def git_revision(dir_):
+    return subprocess.check_output("git rev-parse --short HEAD".split(),
+                                   cwd=dir_).decode("ascii").strip()
 
 
 DEFAULT_ENV_PARAMS = {
@@ -50,6 +57,7 @@ DEFAULT_PARAMS = {
     'addnl_loss_term': 'fwrl',  # Use an additional loss term supported modes: noop or fwrl
     'mid_dir': '/z/home/{USER}/mid'.format(USER=os.environ['USER']),
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
+    'gitrev': git_revision(Path(__file__).absolute().parent)
 }
 
 
