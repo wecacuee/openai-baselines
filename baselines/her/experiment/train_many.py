@@ -4,18 +4,14 @@ from subprocess import check_call
 from pathlib import Path
 import sys
 
-if __package__ is None:
-    __package__ = "baselines.her.experiment"
-
 from .config import DEFAULT_PARAMS
-from .train import launch
 from ..results_plotter import plot_results
 
 
 def config_variations(
         keys = ["env", "addnl_loss_term"],
-        env = [#"FetchReach-v1",
-               "FetchPush-v1", "FetchSlide-v1"],
+        env = [  # "FetchReach-v1",
+            "FetchPush-v1", "FetchSlide-v1"],
         addnl_loss_term = ["fwrl", "noop"]):
     kwargs = locals()
     return {k: kwargs[k] for k in keys}
@@ -30,7 +26,7 @@ def config_vars_to_configs(config_vars):
 def call_train(**conf):
     cmd = ([sys.executable, str(Path(__file__).parent / "train.py")] +
            sum([["--" + k, str(v)] for k, v in conf.items()], []))
-    print("Calling {}".format("' '".join(cmd)))
+    print("Calling '{}'".format("' '".join(cmd)))
     return check_call(cmd)
 
 
@@ -46,5 +42,3 @@ def train_many(**kwargs):
 
 
 main = partial(train_many, num_cpu = 6)
-if __name__ == '__main__':
-    main()
