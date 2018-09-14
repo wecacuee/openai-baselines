@@ -78,12 +78,14 @@ def plot_results(
         plt.ylabel(metric)
         plt.title(metric)
         plt.legend()
+        for d in dirs:
+            path = Path(osp.join(d, metric + ".pdf"))
+            path.parent.mkdir(parents=True, exist_ok=True)
+            print("Saving plot to {}".format(path))
+            plt.savefig(str(path))
+
         if os.environ.get("DISPLAY") == ":0":
             plt.show()
-        path = Path(osp.join(d, metric + ".pdf"))
-        path.parent.mkdir(parents=True, exist_ok=True)
-        print("Saving plot to {}".format(path))
-        plt.savefig(str(path))
 
 
 main = plot_results
