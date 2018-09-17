@@ -11,7 +11,8 @@ import gym
 from baselines import logger
 from baselines.her.ddpg import DDPG, addnl_loss_term_noop
 from baselines.her.her import make_sample_her_transitions
-from baselines.her.fwrl import addnl_loss_term_fwrl, step_with_constraint_loss_term_fwrl
+from baselines.her.fwrl import (constraint_loss_term_fwrl,
+                                step_with_constraint_loss_term_fwrl)
 
 
 def ignore_extrakw(f):
@@ -172,11 +173,14 @@ def simple_goal_subtract(a, b):
     return a - b
 
 
+available_addnl_loss_terms = dict(noop=addnl_loss_term_noop,
+                                  fwrl=constraint_loss_term_fwrl,
+                                  stepfwrl=step_with_constraint_loss_term_fwrl)
+
+
 def addnl_loss_term_from_str(
         key,
-        available=dict(noop=addnl_loss_term_noop,
-                       fwrl=addnl_loss_term_fwrl,
-                       stepfwrl=step_with_constraint_loss_term_fwrl)):
+        available = available_addnl_loss_terms):
     return available[key]
 
 
