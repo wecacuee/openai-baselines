@@ -33,8 +33,15 @@ def glob_files(dir_, patterns):
 def progress_load_results(dir_, pattern="progress.csv"):
     import pandas
     data = []
-    for fname in glob_files(dir_, patterns = [pattern]):
-        data.append(pandas.read_csv(fname))
+    filenames = glob_files(dir_, patterns = [pattern])
+    if not filenames:
+        raise RuntimeError("failed to find any files {}{}".format(dir_, pattern))
+    for fname in filenames:
+        try:
+            data.append(pandas.read_csv(fname))
+        except pandas.errors.EmptyDataError as e:
+            raise RuntimeError("bad file: {}".format(fname)) from e
+
     return pandas.concat(data)
 
 
@@ -62,33 +69,56 @@ def diff_substr(strs, s):
     return "".join(diffs[strs.index(s)])
 
 
+def mm2inches(mm):
+    return mm * 0.03937
+
+
+def default_figsize(
+        A4WIDTH = mm2inches(210)):
+    return (A4WIDTH / 2, A4WIDTH / 2 / 1.618)
+
+
 def plot_results(
         dirs,
         xdatakey = "epoch",
         metrics = """train/success_rate test/success_rate
-        test/mean_Q train/mean_loss train/mean_addnl_loss""".split()):
+        test/mean_Q train/critic_loss train/critic_addnl_loss""".split(),
+        translations={"epoch": "Epoch",
+                      "test/success_rate": "Test success rate"},
+        figsize = default_figsize):
     data = {d : progress_load_results(d) for d in dirs}
     for metric in metrics:
-        plt.clf()
+        fig = plt.figure(figsize=figsize())
+        ax = fig.add_subplot(1, 1, 1)
         for d, clr in zip(dirs, COLORS):
-            label = diff_substr(dirs, d)
-            plt.plot(data[d][xdatakey], data[d][metric],
-                     label=label, color=clr)
-        plt.xlabel(xdatakey)
-        plt.ylabel(metric)
-        plt.title(metric)
-        plt.legend()
+            if xdatakey in data[d] and metric in data[d]:
+                label = diff_substr(dirs, d)
+                ax.plot(data[d][xdatakey], data[d][metric],
+                        label=translations.get(label, label), color=clr)
+        ax.set_xlabel(translations.get(xdatakey, xdatakey))
+        ax.set_ylabel(translations.get(metric, metric))
+        ax.set_title(metric)
+        ax.legend()
         for d in dirs:
             path = Path(osp.join(d, metric + ".pdf"))
             path.parent.mkdir(parents=True, exist_ok=True)
             print("Saving plot to {}".format(path))
-            plt.savefig(str(path))
+            fig.savefig(str(path))
 
         if os.environ.get("DISPLAY") == ":0":
             plt.show()
 
 
+def plot_results_grouped(rootdir, dir_patterns, **kw):
+    for dirp in dir_patterns:
+        plot_results(glob_files(rootdir, patterns = [dirp]), **kw)
+
 main = plot_results
+
+main_grouped = partial(plot_results_grouped,
+                       '/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/',
+                       ['*{}-v1-*/'.format(env)
+                        for env in "_FetchPush _FetchReach _FetchSlide".split()])
 
 if __name__ == '__main__':
     main(sys.argv[1:])
