@@ -72,3 +72,4 @@ for epoch in  range(1, EPOCHS):
     assert k in batch_tf, "no key {} in batch_tf".format(k)
 AssertionError: no key ag in batch_tf
 ```
+* FIXME: need a better config model that can work with mpi.

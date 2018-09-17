@@ -66,7 +66,7 @@ def plot_results(
         dirs,
         xdatakey = "epoch",
         metrics = """train/success_rate test/success_rate
-        test/mean_Q stats_o/mean stats_g/mean""".split()):
+        test/mean_Q train/mean_loss train/mean_addnl_loss""".split()):
     data = {d : progress_load_results(d) for d in dirs}
     for metric in metrics:
         plt.clf()

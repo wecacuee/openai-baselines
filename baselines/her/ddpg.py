@@ -128,6 +128,10 @@ class DDPG(object):
         buffer_size = (self.buffer_size // self.rollout_batch_size) * self.rollout_batch_size
         self.buffer = ReplayBuffer(buffer_shapes, buffer_size, self.T, self.sample_transitions)
 
+        self.log_critic_loss = 0
+        self.log_actor_loss = 0
+        self.log_critic_addnl_loss = 0
+
     def _random_action(self, n):
         return np.random.uniform(low=-self.max_u, high=self.max_u, size=(n, self.dimu))
 
@@ -211,12 +215,16 @@ class DDPG(object):
 
     def _grads(self):
         # Avoid feed_dict here for performance!
-        critic_loss, actor_loss, Q_grad, pi_grad = self.sess.run([
+        critic_loss, actor_loss, Q_grad, pi_grad, Q_addnl_loss = self.sess.run([
             self.Q_loss_tf,
             self.main.Q_pi_tf,
             self.Q_grad_tf,
-            self.pi_grad_tf
+            self.pi_grad_tf,
+            self.Q_addnl_loss_tf
         ])
+        self.log_critic_loss = critic_loss
+        self.log_actor_loss = actor_loss
+        self.log_critic_addnl_loss = Q_addnl_loss
         return critic_loss, actor_loss, Q_grad, pi_grad
 
     def _update(self, Q_grad, pi_grad):
@@ -304,7 +312,7 @@ class DDPG(object):
             # NOTE: o_2 and g_2 are just next step observations and next step
             # goals?
             # o_2 = o_{t+1} if o = o_{t}
-            # TODO: If we understand o_2 and g_2 right, then why target
+            # NOTE: If we understand o_2 and g_2 right, then why target
             # networks get them as inputs?
             # Oh !! because of the bellman equation where the target network
             # gets evaluated on the next state. It is interesting that we need
@@ -327,7 +335,7 @@ class DDPG(object):
         # NOTE: Does the AddnlLossTerm gets added to both pi_loss_tf and
         # Q_loss_tf or only Q_loss_tf?
         # Ans: No. pi_loss_tf is generic. It is not affected by FW.
-        self.Q_loss_tf += self.addnl_loss_term(
+        self.Q_addnl_loss_tf = self.addnl_loss_term(
             batch_tf,
             target_net_fn = partial(
                 with_scope_create_net,
@@ -339,6 +347,7 @@ class DDPG(object):
                 net_creator=partial(self.create_actor_critic,
                                     net_type='main', **self.__dict__),
                 variable_scope="main"))
+        self.Q_loss_tf += self.Q_addnl_loss_tf
         # NOTE: Why are there separate objective functions for pi and Q?
         # Because the pi loss term makes sure that only pi parameters are in
         # the objective. It selectively optimizes pi parameters.
@@ -387,6 +396,9 @@ class DDPG(object):
         logs += [('stats_o/std', np.mean(self.sess.run([self.o_stats.std])))]
         logs += [('stats_g/mean', np.mean(self.sess.run([self.g_stats.mean])))]
         logs += [('stats_g/std', np.mean(self.sess.run([self.g_stats.std])))]
+        logs += [('train/critic_loss', np.mean(self.log_critic_loss))]
+        logs += [('train/critic_addnl_loss',
+                  np.mean(self.log_critic_addnl_loss))]
 
         if prefix is not '' and not prefix.endswith('/'):
             return [(prefix + '/' + key, val) for key, val in logs]

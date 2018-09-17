@@ -33,7 +33,6 @@ def call_train(**conf):
 def train_many(**kwargs):
     logdirs = []
     for confname, conf in config_vars_to_configs(config_variations()).items():
-        conf.update(dict(confname = confname))
         conf.update(kwargs)
         call_train(**conf)
         logdirs.append(
