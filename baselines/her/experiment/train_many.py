@@ -36,9 +36,8 @@ def call_train(**conf):
 def train_many(**kwargs):
     logdirs = []
     for confname, conf in config_vars_to_configs(config_variations()).items():
-        if confname != "FetchReach-v1-stepfwrl-future":
-            conf.update(kwargs)
-            call_train(**conf)
+        conf.update(kwargs)
+        call_train(**conf)
         logdirs.append(
             DEFAULT_PARAMS['logdir'](**dict(DEFAULT_PARAMS, **conf)))
     plot_results(logdirs)
