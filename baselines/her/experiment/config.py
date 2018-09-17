@@ -11,7 +11,7 @@ import gym
 from baselines import logger
 from baselines.her.ddpg import DDPG, addnl_loss_term_noop
 from baselines.her.her import make_sample_her_transitions
-from baselines.her.fwrl import addnl_loss_term_fwrl
+from baselines.her.fwrl import addnl_loss_term_fwrl, step_with_constraint_loss_term_fwrl
 
 
 def ignore_extrakw(f):
@@ -81,7 +81,7 @@ DEFAULT_PARAMS = {
                 Path(__file__).absolute().parent)),
     'env' : "FetchReach-v1",
     'env_name' : "FetchReach-v1",
-    'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{addnl_loss_term}".format,
+    'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{addnl_loss_term}-{replay_strategy}".format,
     'n_epochs': 50,
     'seed': 0,
     'replay_strategy': 'future',
@@ -172,9 +172,11 @@ def simple_goal_subtract(a, b):
     return a - b
 
 
-def addnl_loss_term_from_str(key,
-                             available=dict(noop=addnl_loss_term_noop,
-                                            fwrl=addnl_loss_term_fwrl)):
+def addnl_loss_term_from_str(
+        key,
+        available=dict(noop=addnl_loss_term_noop,
+                       fwrl=addnl_loss_term_fwrl,
+                       stepfwrl=step_with_constraint_loss_term_fwrl)):
     return available[key]
 
 
