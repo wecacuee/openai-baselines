@@ -9,7 +9,7 @@ from ..results_plotter import plot_results
 
 
 def config_variations(
-        keys = ["env", "addnl_loss_term"],
+        keys = ["env", "addnl_loss_term", "replay_strategy"],
         env = [   "FetchReach-v1",
             #"FetchPush-v1",
             #"FetchSlide-v1"
@@ -36,10 +36,11 @@ def call_train(**conf):
 def train_many(**kwargs):
     logdirs = []
     for confname, conf in config_vars_to_configs(config_variations()).items():
-        conf.update(kwargs)
-        call_train(**conf)
+        if confname != "FetchReach-v1-stepfwrl-future":
+            conf.update(kwargs)
+            call_train(**conf)
         logdirs.append(
-            DEFAULT_PARAMS['logdir'].format(**dict(DEFAULT_PARAMS, **conf)))
+            DEFAULT_PARAMS['logdir'](**dict(DEFAULT_PARAMS, **conf)))
     plot_results(logdirs)
 
 
