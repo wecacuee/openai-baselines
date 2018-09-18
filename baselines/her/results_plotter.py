@@ -58,7 +58,7 @@ def common_substr(strs, return_diffs=False):
             comm.append(first[i])
         else:
             for d, s in zip(diffs, strs):
-                if len(strs) > i:
+                if i < len(s):
                     d.append(s[i])
     return (comm, diffs) if return_diffs else comm
 
