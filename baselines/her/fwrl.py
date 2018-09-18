@@ -138,9 +138,25 @@ qlearning_constrained_loss_term_fwrl = partial(
     sum_loss_terms,
     loss_terms_fns = [qlearning_loss_term, lower_bound_loss_term_fwrl,
                       upper_bound_loss_term_fwrl])
-
+"""
+This should work because of log term perspective but needs HER sampling.
+"""
 
 step_with_constraint_loss_term_fwrl = partial(
     sum_loss_terms,
     loss_terms_fns = [lower_bound_loss_term_fwrl, step_loss_term_fwrl,
                       upper_bound_loss_term_fwrl])
+"""
+This should work without HER sampling because of one step reward consideration
+"""
+
+
+qlearning_step_loss_term_fwrl = partial(
+    sum_loss_terms,
+    loss_terms_fns = [qlearning_loss_term,
+                      lower_bound_loss_term_fwrl,
+                      step_loss_term_fwrl,
+                      upper_bound_loss_term_fwrl])
+"""
+This might work because of a balance between HER and one-step reward.
+"""

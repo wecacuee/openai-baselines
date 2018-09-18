@@ -49,7 +49,7 @@ train_many_vars = partial(
                          #"FetchPush-v1",
                          #"FetchSlide-v1"
         ]),
-    loss_term = Variations([ "stfw", "fwrl", "herr"]),
+    loss_term = Variations([ "stfw", "fwrl", "ddpg"]),
     replay_strategy = Variations([#"future",
                                   "none"]))
 
