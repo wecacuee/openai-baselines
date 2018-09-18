@@ -30,12 +30,9 @@ def glob_files(dir_, patterns):
     return sum(map(compose(partial(osp.join, dir_), glob), patterns), [])
 
 
-def progress_load_results(dir_, pattern="progress.csv"):
+def progress_load_results(filenames):
     import pandas
     data = []
-    filenames = glob_files(dir_, patterns = [pattern])
-    if not filenames:
-        raise RuntimeError("failed to find any files {}{}".format(dir_, pattern))
     for fname in filenames:
         try:
             data.append(pandas.read_csv(fname))
@@ -52,15 +49,17 @@ def common_substr(strs, return_diffs=False):
     """
     strs = list(strs)
     min_len = min(map(len, strs))
+    max_len = max(map(len, strs))
     first = strs[0]
     comm = type(first)()
     diffs = [type(first)() for s in strs]
-    for i in range(min_len):
-        if all((first[i] == s[i]) for s in strs):
+    for i in range(max_len):
+        if i < min_len and all((first[i] == s[i]) for s in strs):
             comm.append(first[i])
         else:
             for d, s in zip(diffs, strs):
-                d.append(s[i])
+                if len(strs) > i:
+                    d.append(s[i])
     return (comm, diffs) if return_diffs else comm
 
 
@@ -81,25 +80,35 @@ def default_figsize(
 def plot_results(
         dirs,
         xdatakey = "epoch",
-        metrics = """train/success_rate test/success_rate
+        metrics = """test/success_rate
         test/mean_Q train/critic_loss train/critic_addnl_loss""".split(),
         translations={"epoch": "Epoch",
-                      "test/success_rate": "Test success rate"},
+                      "test/success_rate": "Success rate (test)",
+                      "test/mean_Q": "Q (test)",
+                      "train/critic_loss" : "Critic loss (train)",
+                      "train/critic_addnl_loss" : "FWRL Critic loss (train)",
+        },
+        pattern = "./progress.csv",
         figsize = default_figsize):
-    data = {d : progress_load_results(d) for d in dirs}
+
+    f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
+    data = {d: progress_load_results(filenames)
+            for d, filenames in zip(dirs, f_per_dirs)
+            if len(filenames)}
     for metric in metrics:
         fig = plt.figure(figsize=figsize())
+        fig.subplots_adjust(left=0.175, bottom=0.20, top=0.98, right=0.98)
         ax = fig.add_subplot(1, 1, 1)
-        for d, clr in zip(dirs, COLORS):
+        for d, clr in zip(data.keys(), COLORS):
             if xdatakey in data[d] and metric in data[d]:
                 label = diff_substr(dirs, d)
                 ax.plot(data[d][xdatakey], data[d][metric],
                         label=translations.get(label, label), color=clr)
         ax.set_xlabel(translations.get(xdatakey, xdatakey))
         ax.set_ylabel(translations.get(metric, metric))
-        ax.set_title(metric)
+        #ax.set_title(translations.get(metric, metric))
         ax.legend()
-        for d in dirs:
+        for d in data.keys():
             path = Path(osp.join(d, metric + ".pdf"))
             path.parent.mkdir(parents=True, exist_ok=True)
             print("Saving plot to {}".format(path))

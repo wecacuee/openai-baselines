@@ -23,10 +23,10 @@ def addnl_loss_term_noop(inputs, target_net_fn, main_net_fn):
     """
     # NOTE: does NOT works with
     # return tf.zeros((0,))
+    # NOTE: does NOT works with
+    # return 0
     # NOTE: works with
-    return 0
-    # NOTE: works with
-    # return tf.constant(0.0)
+    return tf.constant(0.0)
     # NOTE: works with
     # return tf.zeros((1,))
 

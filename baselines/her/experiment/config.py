@@ -35,6 +35,11 @@ def git_revision(dir_):
                                    cwd=dir_).decode("ascii").strip()
 
 
+this_file_git_rev_fn = ignore_extrakw(
+    partial(git_revision,
+            Path(__file__).absolute().parent))
+
+
 DEFAULT_ENV_PARAMS = {
     'FetchReach-v1': {
         'n_cycles': 10,
@@ -77,9 +82,7 @@ DEFAULT_PARAMS = {
     'user': os.environ['USER'],
     'mid_dir': '/z/home/{user}/mid'.format,
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
-    'gitrev': ignore_extrakw(
-        partial(git_revision,
-                Path(__file__).absolute().parent)),
+    'gitrev': this_file_git_rev_fn,
     'env' : "FetchReach-v1",
     'env_name' : "FetchReach-v1",
     'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{addnl_loss_term}-{replay_strategy}".format,

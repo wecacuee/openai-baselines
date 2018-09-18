@@ -1,6 +1,5 @@
 import os
 import sys
-from collections import Callable
 
 import click
 import numpy as np
@@ -193,6 +192,8 @@ def launch(
 @click.option('--addnl_loss_term', type=click.Choice(
     list(config.available_addnl_loss_terms.keys())),
               default='fwrl', help='what additional loss term to include')
+@click.option('--gitrev', type=str, default=config.this_file_git_rev_fn,
+              help='Git revision for naming the log directory')
 def main(**kwargs):
     return launch(**kwargs)
 

@@ -8,16 +8,15 @@ from .config import DEFAULT_PARAMS
 from ..results_plotter import plot_results
 
 
-def config_variations(
-        keys = ["env", "addnl_loss_term", "replay_strategy"],
-        env = [   "FetchReach-v1",
-            #"FetchPush-v1",
-            #"FetchSlide-v1"
-        ],
-        addnl_loss_term = [ "stepfwrl", "fwrl", "noop"],
-        replay_strategy = ["future", "none"]):
-    kwargs = locals()
-    return {k: kwargs[k] for k in keys}
+class Variations(list):
+    pass
+
+
+def separate_variations(kw):
+    return ({k: v for k, v in kw.items()
+             if isinstance(v, Variations)},
+            {k: v for k, v in kw.items()
+             if not isinstance(v, Variations)})
 
 
 def config_vars_to_configs(config_vars):
@@ -35,7 +34,8 @@ def call_train(**conf):
 
 def train_many(**kwargs):
     logdirs = []
-    for confname, conf in config_vars_to_configs(config_variations()).items():
+    variations, kwargs = separate_variations(kwargs)
+    for confname, conf in config_vars_to_configs(variations).items():
         conf.update(kwargs)
         call_train(**conf)
         logdirs.append(
@@ -43,4 +43,15 @@ def train_many(**kwargs):
     plot_results(logdirs)
 
 
-main = partial(train_many, num_cpu = 6)
+train_many_vars = partial(
+    train_many,
+    env = Variations([   "FetchReach-v1",
+                         #"FetchPush-v1",
+                         #"FetchSlide-v1"
+        ]),
+    addnl_loss_term = Variations([ #"stepfwrl", "fwrl",
+        "noop"]),
+    replay_strategy = Variations(["future", "none"]))
+
+
+main = partial(train_many_vars, num_cpu = 6)
