@@ -115,7 +115,8 @@ def plot_results(
             fig.savefig(str(path))
 
         if os.environ.get("DISPLAY") == ":0":
-            plt.show()
+            pass
+            #plt.show()
 
 
 def plot_results_grouped(rootdir, dir_patterns, **kw):

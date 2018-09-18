@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg') # Can change to 'Agg' for non-interactive mode
+#matplotlib.use('Agg') # Can change to 'Agg' for non-interactive mode
 
 import matplotlib.pyplot as plt
 plt.rcParams['svg.fonttype'] = 'none'
