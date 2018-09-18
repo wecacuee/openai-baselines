@@ -103,7 +103,7 @@ def launch(
 
     # Prepare params.
     params = config.DEFAULT_PARAMS
-    params['env_name'] = env
+    params['env'] = params['env_name'] = env
     params['replay_strategy'] = replay_strategy
     if env in config.DEFAULT_ENV_PARAMS:
         params.update(config.DEFAULT_ENV_PARAMS[env])  # merge env-specific parameters in

@@ -17,7 +17,7 @@ def random_shuffle(*args, axis=1):
     return tf.split(shuff_cat_args, num_or_size_splits=size_splits, axis=axis)
 
 
-def constraint_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
+def lower_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
                               target_net_fn: Callable,
                               main_net_fn: Callable):
     """Returns a loss term as a function of inputs reusing the variables from
@@ -63,6 +63,43 @@ def constraint_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
                 tf.stop_gradient(Q_via_i) - Q_best)))
 
 
+def upper_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
+                               target_net_fn: Callable,
+                               main_net_fn: Callable):
+    """Returns a loss term as a function of inputs reusing the variables from
+       variable_scope
+
+    Impelements the loss function
+    L = | Qₘ(o, g', u) + Qₘ(o', g, μ(o', g)) - Qₜ(o, g, u) |²₊
+    """
+    # Check inputs for o, ag, g, reward
+    for k in 'o ag g r'.split():
+        assert k in batch_tf, "no key {} in batch_tf {}".format(
+            k, batch_tf.keys())
+
+    o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
+
+    Q_via_i = (
+        # Qₘ(o, g', u)
+        main_net_fn(
+            inputs=dict(o=batch_tf['o'], g=g_i, u=batch_tf['u']))
+        .Q_tf +
+        # How's the max being computed over u?
+        # Because we are chosing the Q_pi_tf
+        # Qₘ(o', g, μ(o', g))
+        main_net_fn(inputs=dict(o=o_i, g=batch_tf['g'], u=batch_tf['u']))
+        .Q_pi_tf)
+
+    # Qₜ(o, g, u)
+    Q_best = target_net_fn(
+        inputs=dict(o=batch_tf['o'], g=batch_tf['g'], u=batch_tf['u'])
+    ).Q_tf
+    return tf.reduce_mean(
+        tf.square(
+            tf.nn.relu(
+                tf.stop_gradient(Q_via_i) - Q_best)))
+
+
 def step_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
                         target_net_fn: Callable,
                         main_net_fn: Callable):
@@ -81,6 +118,12 @@ def sum_loss_terms(batch_tf: Mapping[str, tf.Tensor],
                for f in loss_terms_fns)
 
 
+bounds_loss_term_fwrl = partial(
+    sum_loss_terms,
+    loss_terms_fns = [lower_bound_loss_term_fwrl, upper_bound_loss_term_fwrl])
+
+
 step_with_constraint_loss_term_fwrl = partial(
     sum_loss_terms,
-    loss_terms_fns = [constraint_loss_term_fwrl, step_loss_term_fwrl])
+    loss_terms_fns = [lower_bound_loss_term_fwrl, step_loss_term_fwrl,
+                      upper_bound_loss_term_fwrl])
