@@ -45,12 +45,11 @@ def train_many(**kwargs):
 
 train_many_vars = partial(
     train_many,
-    env = Variations([   "FetchReach-v1",
-                         #"FetchPush-v1",
+    env = Variations([   #"FetchReach-v1",
+                         "FetchPush-v1",
                          #"FetchSlide-v1"
         ]),
-    addnl_loss_term = Variations([ #"stepfwrl", "fwrl",
-        "noop"]),
+    addnl_loss_term = Variations([ "stfw", "fwrl", "noop"]),
     replay_strategy = Variations(["future", "none"]))
 
 
