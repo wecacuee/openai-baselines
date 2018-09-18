@@ -13,7 +13,9 @@ from baselines.her.ddpg import DDPG, qlearning_loss_term
 from baselines.her.her import make_sample_her_transitions
 from baselines.her.fwrl import (step_with_constraint_loss_term_fwrl,
                                 qlearning_constrained_loss_term_fwrl,
-                                qlearning_step_loss_term_fwrl)
+                                qlearning_step_loss_term_fwrl,
+                                step_lower_bound_loss_term_fwrl,
+                                step_upper_bound_loss_term_fwrl)
 
 
 def ignore_extrakw(f):
@@ -180,7 +182,9 @@ def simple_goal_subtract(a, b):
 available_loss_terms = dict(ddpg=qlearning_loss_term,
                             fwrl=qlearning_constrained_loss_term_fwrl,
                             stfw=step_with_constraint_loss_term_fwrl,
-                            qlst=qlearning_step_loss_term_fwrl)
+                            qlst=qlearning_step_loss_term_fwrl,
+                            stlo=step_lower_bound_loss_term_fwrl,
+                            stup=step_upper_bound_loss_term_fwrl)
 
 
 def loss_term_from_str(

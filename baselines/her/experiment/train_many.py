@@ -40,16 +40,18 @@ def train_many(**kwargs):
         call_train(**conf)
         logdirs.append(
             DEFAULT_PARAMS['logdir'](**dict(DEFAULT_PARAMS, **conf)))
+    print(logdirs)
     plot_results(logdirs)
 
 
 train_many_vars = partial(
     train_many,
-    env = Variations([   "FetchReach-v1",
-                         #"FetchPush-v1",
-                         #"FetchSlide-v1"
+    env = Variations([   # "FetchReach-v1",
+                         "FetchPush-v1",
+                         # "FetchSlide-v1"
         ]),
-    loss_term = Variations([ "stfw", "fwrl", "ddpg"]),
+    loss_term = Variations(
+        ["stfw", "fwrl", "ddpg", "stlo", "stup", "qlst"]),
     replay_strategy = Variations([#"future",
                                   "none"]))
 
