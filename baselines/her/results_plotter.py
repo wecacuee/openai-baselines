@@ -81,12 +81,11 @@ def plot_results(
         dirs,
         xdatakey = "epoch",
         metrics = """test/success_rate
-        test/mean_Q train/critic_loss train/critic_addnl_loss""".split(),
+        test/mean_Q train/critic_loss """.split(),
         translations={"epoch": "Epoch",
                       "test/success_rate": "Success rate (test)",
                       "test/mean_Q": "Q (test)",
                       "train/critic_loss" : "Critic loss (train)",
-                      "train/critic_addnl_loss" : "FWRL Critic loss (train)",
         },
         pattern = "./progress.csv",
         figsize = default_figsize):

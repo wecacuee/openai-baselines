@@ -1,5 +1,6 @@
 from functools import partial
 from collections import OrderedDict
+from typing import Mapping, Callable
 
 import numpy as np
 import tensorflow as tf
@@ -17,7 +18,7 @@ def dims_to_shapes(input_dims):
     return {key: tuple([val]) if val > 0 else tuple() for key, val in input_dims.items()}
 
 
-def addnl_loss_term_noop(inputs, target_net_fn, main_net_fn):
+def loss_term_noop(inputs, target_net_fn, main_net_fn):
     """Returns a loss term as a function of inputs reusing the variables from
        variable_scope
     """
@@ -31,9 +32,42 @@ def addnl_loss_term_noop(inputs, target_net_fn, main_net_fn):
     # return tf.zeros((1,))
 
 
-def with_scope_create_net(net_creator, inputs, variable_scope=""):
+def qlearning_loss_term(batch_tf: Mapping[str, tf.Tensor],
+                        target_net_fn: Callable,
+                        main_net_fn: Callable,
+                        post_process_target_ret: Callable=lambda x: x,
+                        gamma=None,
+                        return_main_target=True):
+    # networks
+    main = main_net_fn(inputs=batch_tf)
+    # NOTE: What is o_2 and g_2. Why replace inputs for target network?
+    # NOTE: o_2 and g_2 are just next step observations and next step
+    # goals?
+    # o_2 = o_{t+1} if o = o_{t}
+    # NOTE: If we understand o_2 and g_2 right, then why target
+    # networks get them as inputs?
+    # Oh !! because of the bellman equation where the target network
+    # gets evaluated on the next state. It is interesting that we need
+    # g_2 for that.
+    target = target_net_fn(inputs=dict(o=batch_tf['o_2'],
+                                       g=batch_tf['g_2'],
+                                       u=batch_tf['u']))
+
+    # loss functions
+    # Qₜ(s', μ(s',a'))
+    target_Q_pi_tf = target.Q_pi_tf
+    # target_tf = r + γ Qₜ(s', μ(s',a'))
+    target_tf = post_process_target_ret(batch_tf['r'] + gamma * target_Q_pi_tf)
+    # Q_loss_tf = (r + γ Qₜ(s', μ(s', a')) - Qₒ(s, δ(a)))²
+    Q_loss_tf = tf.reduce_mean(
+        tf.square(tf.stop_gradient(target_tf) - main.Q_tf))
+    return Q_loss_tf
+
+
+def with_scope_create_net(net_creator, inputs, variable_scope="", reuse=False):
     with tf.variable_scope(variable_scope) as vs:
-        vs.reuse_variables()
+        if reuse:
+            vs.reuse_variables()
         ret = net_creator(inputs)
         vs.reuse_variables()
         return ret
@@ -63,7 +97,7 @@ class DDPG(object):
                  Q_lr, pi_lr, norm_eps, norm_clip, max_u, action_l2, clip_obs, scope, T,
                  rollout_batch_size, subtract_goals, relative_goals, clip_pos_returns, clip_return,
                  sample_transitions, gamma, reuse=False,
-                 addnl_loss_term=addnl_loss_term_noop,
+                 loss_term=qlearning_loss_term,
                  **kwargs):
         """Implementation of DDPG that is used in combination with Hindsight Experience Replay (HER).
 
@@ -130,7 +164,6 @@ class DDPG(object):
 
         self.log_critic_loss = 0
         self.log_actor_loss = 0
-        self.log_critic_addnl_loss = 0
 
     def _random_action(self, n):
         return np.random.uniform(low=-self.max_u, high=self.max_u, size=(n, self.dimu))
@@ -215,16 +248,14 @@ class DDPG(object):
 
     def _grads(self):
         # Avoid feed_dict here for performance!
-        critic_loss, actor_loss, Q_grad, pi_grad, Q_addnl_loss = self.sess.run([
+        critic_loss, actor_loss, Q_grad, pi_grad = self.sess.run([
             self.Q_loss_tf,
             self.main.Q_pi_tf,
             self.Q_grad_tf,
-            self.pi_grad_tf,
-            self.Q_addnl_loss_tf
+            self.pi_grad_tf
         ])
         self.log_critic_loss = critic_loss
         self.log_actor_loss = actor_loss
-        self.log_critic_addnl_loss = Q_addnl_loss
         return critic_loss, actor_loss, Q_grad, pi_grad
 
     def _update(self, Q_grad, pi_grad):
@@ -298,56 +329,36 @@ class DDPG(object):
                                 for i, key in enumerate(self.stage_shapes.keys())])
         batch_tf['r'] = tf.reshape(batch_tf['r'], [-1, 1])
 
-        # networks
-        with tf.variable_scope('main') as vs:
-            if reuse:
-                vs.reuse_variables()
-            self.main = self.create_actor_critic(batch_tf, net_type='main', **self.__dict__)
-            vs.reuse_variables()
-        with tf.variable_scope('target') as vs:
-            if reuse:
-                vs.reuse_variables()
-            target_batch_tf = batch_tf.copy()
-            # NOTE: What is o_2 and g_2. Why replace inputs for target network?
-            # NOTE: o_2 and g_2 are just next step observations and next step
-            # goals?
-            # o_2 = o_{t+1} if o = o_{t}
-            # NOTE: If we understand o_2 and g_2 right, then why target
-            # networks get them as inputs?
-            # Oh !! because of the bellman equation where the target network
-            # gets evaluated on the next state. It is interesting that we need
-            # g_2 for that.
-            target_batch_tf['o'] = batch_tf['o_2']
-            target_batch_tf['g'] = batch_tf['g_2']
-            self.target = self.create_actor_critic(
-                target_batch_tf, net_type='target', **self.__dict__)
-            vs.reuse_variables()
-        assert len(self._vars("main")) == len(self._vars("target"))
+        main_net_fn = partial(
+            with_scope_create_net,
+            net_creator=partial(self.create_actor_critic,
+                                net_type='main', **self.__dict__),
+            variable_scope="main",
+            reuse=reuse)
+        self.main = main_net_fn(inputs=batch_tf)
+        target_net_fn = partial(
+            with_scope_create_net,
+            net_creator=partial(self.create_actor_critic,
+                                net_type='target', **self.__dict__),
+            variable_scope="target",
+            reuse=reuse)
+        self.target = target_net_fn(inputs=dict(o=batch_tf['o_2'],
+                                                g=batch_tf['g_2'],
+                                                u=batch_tf['u']))
 
-        # loss functions
-        # Qₜ(s', μ(s',a'))
-        target_Q_pi_tf = self.target.Q_pi_tf
-        clip_range = (-self.clip_return, 0. if self.clip_pos_returns else np.inf)
-        # target_tf = r + γ Qₜ(s', μ(s',a'))
-        target_tf = tf.clip_by_value(batch_tf['r'] + self.gamma * target_Q_pi_tf, *clip_range)
-        # Q_loss_tf = (r + γ Qₜ(s', μ(s', a')) - Qₒ(s, δ(a)))²
-        self.Q_loss_tf = tf.reduce_mean(tf.square(tf.stop_gradient(target_tf) - self.main.Q_tf))
         # NOTE: Does the AddnlLossTerm gets added to both pi_loss_tf and
         # Q_loss_tf or only Q_loss_tf?
         # Ans: No. pi_loss_tf is generic. It is not affected by FW.
-        self.Q_addnl_loss_tf = self.addnl_loss_term(
+        self.Q_loss_tf = self.loss_term(
             batch_tf,
-            target_net_fn = partial(
-                with_scope_create_net,
-                net_creator=partial(self.create_actor_critic,
-                                    net_type='target', **self.__dict__),
-                variable_scope="target"),
-            main_net_fn = partial(
-                with_scope_create_net,
-                net_creator=partial(self.create_actor_critic,
-                                    net_type='main', **self.__dict__),
-                variable_scope="main"))
-        self.Q_loss_tf += self.Q_addnl_loss_tf
+            main_net_fn = partial(main_net_fn, reuse=True),
+            target_net_fn = partial(target_net_fn, reuse=True),
+            post_process_target_ret = partial(
+                tf.clip_by_value,
+                clip_value_min=-self.clip_return,
+                clip_value_max=(0. if self.clip_pos_returns else np.inf)),
+            gamma = self.gamma)
+
         # NOTE: Why are there separate objective functions for pi and Q?
         # Because the pi loss term makes sure that only pi parameters are in
         # the objective. It selectively optimizes pi parameters.
@@ -397,8 +408,6 @@ class DDPG(object):
         logs += [('stats_g/mean', np.mean(self.sess.run([self.g_stats.mean])))]
         logs += [('stats_g/std', np.mean(self.sess.run([self.g_stats.std])))]
         logs += [('train/critic_loss', np.mean(self.log_critic_loss))]
-        logs += [('train/critic_addnl_loss',
-                  np.mean(self.log_critic_addnl_loss))]
 
         if prefix is not '' and not prefix.endswith('/'):
             return [(prefix + '/' + key, val) for key, val in logs]

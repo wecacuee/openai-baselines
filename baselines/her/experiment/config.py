@@ -9,10 +9,10 @@ import numpy as np
 import gym
 
 from baselines import logger
-from baselines.her.ddpg import DDPG, addnl_loss_term_noop
+from baselines.her.ddpg import DDPG, qlearning_loss_term
 from baselines.her.her import make_sample_her_transitions
-from baselines.her.fwrl import (bounds_loss_term_fwrl,
-                                step_with_constraint_loss_term_fwrl)
+from baselines.her.fwrl import (step_with_constraint_loss_term_fwrl,
+                                qlearning_constrained_loss_term_fwrl)
 
 
 def ignore_extrakw(f):
@@ -78,14 +78,14 @@ DEFAULT_PARAMS = {
     # normalization
     'norm_eps': 0.01,  # epsilon used for observation normalization
     'norm_clip': 5,  # normalized observations are cropped to this values
-    'addnl_loss_term': 'fwrl',  # Use an additional loss term supported modes: noop or fwrl
+    'loss_term': 'fwrl',  # Use an additional loss term supported modes: noop or fwrl
     'user': os.environ['USER'],
     'mid_dir': '/z/home/{user}/mid'.format,
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
     'gitrev': this_file_git_rev_fn,
     'env' : "FetchReach-v1",
     'env_name' : "FetchReach-v1",
-    'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{addnl_loss_term}-{replay_strategy}".format,
+    'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{loss_term}-{replay_strategy}".format,
     'n_epochs': 50,
     'seed': 0,
     'replay_strategy': 'future',
@@ -137,7 +137,7 @@ def prepare_params(kwargs):
     for name in ['buffer_size', 'hidden', 'layers', 'network_class', 'polyak',
                  'batch_size', 'Q_lr', 'pi_lr', 'norm_eps', 'norm_clip',
                  'max_u', 'action_l2', 'clip_obs', 'scope', 'relative_goals',
-                 'addnl_loss_term']:
+                 'loss_term']:
         ddpg_params[name] = kwargs[name]
         kwargs['_' + name] = kwargs[name]
         del kwargs[name]
@@ -176,14 +176,14 @@ def simple_goal_subtract(a, b):
     return a - b
 
 
-available_addnl_loss_terms = dict(noop=addnl_loss_term_noop,
-                                  fwrl=bounds_loss_term_fwrl,
-                                  stfw=step_with_constraint_loss_term_fwrl)
+available_loss_terms = dict(herr=qlearning_loss_term,
+                            fwrl=qlearning_constrained_loss_term_fwrl,
+                            stfw=step_with_constraint_loss_term_fwrl)
 
 
-def addnl_loss_term_from_str(
+def loss_term_from_str(
         key,
-        available = available_addnl_loss_terms):
+        available = available_loss_terms):
     return available[key]
 
 
@@ -208,8 +208,8 @@ def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
                         'sample_transitions': sample_her_transitions,
                         'gamma': gamma,
                         })
-    ddpg_params['addnl_loss_term'] = addnl_loss_term_from_str(
-        ddpg_params['addnl_loss_term'])
+    ddpg_params['loss_term'] = loss_term_from_str(
+        ddpg_params['loss_term'])
     ddpg_params['info'] = {
         'env_name': params['env_name'],
     }
