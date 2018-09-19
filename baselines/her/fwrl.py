@@ -153,6 +153,15 @@ This should work without HER sampling because of one step reward consideration
 
 qlearning_step_loss_term_fwrl = partial(
     sum_loss_terms,
+    loss_terms_fns = [qlearning_loss_term, step_loss_term_fwrl])
+"""
+Experiments show that step term does better than step + constraints. Does step
++ qlearning does better than just qlearning?
+"""
+
+
+qlearning_step_constrained_loss_term_fwrl = partial(
+    sum_loss_terms,
     loss_terms_fns = [qlearning_loss_term,
                       lower_bound_loss_term_fwrl,
                       step_loss_term_fwrl,

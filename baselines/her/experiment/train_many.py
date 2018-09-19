@@ -52,7 +52,7 @@ train_many_vars = partial(
         ]),
     loss_term = Variations(
         ["stfw", "fwrl", "ddpg", "stlo", "stup", "qlst"]),
-    replay_strategy = Variations([#"future",
+    replay_strategy = Variations(["future",
                                   "none"]))
 
 
