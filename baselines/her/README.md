@@ -77,7 +77,8 @@ AssertionError: no key ag in batch_tf
 ## Needed experiments
 * Effect of ablation Q-function objective vs step objective.
 * Effect of HER sampling on different versions of the experiment.
-* Effect of Batch size
+* Effect of Batch size.
+* Special sampling for FWRL.
 
 ## Unanswered questions
 * Why does FWRL stop working without HER?
