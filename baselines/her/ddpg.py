@@ -88,6 +88,8 @@ def stage_shapes_frm_input_dims(input_dims):
     stage_shapes['r'] = (None,)
     stage_shapes['ag'] = (None, *input_shapes['g'])
     stage_shapes['ag_2'] = (None, *input_shapes['g'])
+    stage_shapes['ag_im'] = (None, *input_shapes['g'])
+    stage_shapes['o_im'] = (None, *input_shapes['o'])
     return stage_shapes
 
 
