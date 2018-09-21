@@ -23,5 +23,6 @@ git pull
 python <<EOF
 from baselines.her.experiment.train_many import main
 main()
+#main(n_epochs=30, replay_strategy="future", loss_term="dqst", gitrev="3f1eafe")
 EOF
 echo "end of pbs script"

@@ -11,6 +11,7 @@ import gym
 from baselines import logger
 from baselines.her.ddpg import DDPG, qlearning_loss_term
 from baselines.her.her import make_sample_her_transitions
+from baselines.her.fwrl import make_sample_fwrl_transitions
 from baselines.her.fwrl import (step_with_constraint_loss_term_fwrl,
                                 qlearning_constrained_loss_term_fwrl,
                                 qlearning_step_loss_term_fwrl,
@@ -170,7 +171,8 @@ def configure_her(params):
         her_params[name] = params[name]
         params['_' + name] = her_params[name]
         del params[name]
-    sample_her_transitions = make_sample_her_transitions(**her_params)
+    #sample_her_transitions = make_sample_her_transitions(**her_params)
+    sample_her_transitions = make_sample_fwrl_transitions(**her_params)
 
     return sample_her_transitions
 

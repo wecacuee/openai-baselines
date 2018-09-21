@@ -44,7 +44,9 @@ def lower_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
     #          distance towards the goal?
     #       A: No.
     # TODO: Think more about it^^
-    o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
+    #o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
+    o_i = batch_tf['o_i']
+    g_i = batch_tf['g_i']
 
     Q_via_i = (
         # Qₜ(o, g', u)
@@ -84,7 +86,9 @@ def upper_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
         assert k in batch_tf, "no key {} in batch_tf {}".format(
             k, batch_tf.keys())
 
-    o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
+    #o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
+    o_i = batch_tf['o_i']
+    g_i = batch_tf['g_i']
 
     Q_via_i = (
         # Qₘ(o, g', u)
@@ -191,6 +195,8 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
                              future_p=None, reward_fun=None):
     """episode_batch is {key: array(buffer_size x T x dim_key)}
     """
+    assert future_p is not None
+    assert reward_fun is not None
     T = episode_batch['u'].shape[1]
     rollout_batch_size = episode_batch['u'].shape[0]
     batch_size = batch_size_in_transitions
@@ -203,10 +209,13 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
 
     # Select future time indexes proportional with probability future_p. These
     # will be used for HER replay by substituting in future goals.
-    her_indexes = np.where(np.random.uniform(size=batch_size) < future_p)
+    her_index_mask = np.random.uniform(size=batch_size) < future_p
+    her_indexes = np.where(her_index_mask)
     future_offset = np.random.uniform(size=batch_size) * (T - t_samples)
     future_offset = future_offset.astype(int)
-    future_t = (t_samples + 1 + future_offset)[her_indexes]
+    future_all_t = (t_samples + 1 + future_offset)
+    future_t = future_all_t[her_indexes]
+    future_all_t[~her_index_mask] = T-1
 
     # Replace goal with achieved goal but only for the previously-selected
     # HER transitions (as defined by her_indexes). For the other transitions,
@@ -214,6 +223,13 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
     # NOTE: HER transitions g <- ag
     future_ag = episode_batch['ag'][episode_idxs[her_indexes], future_t]
     transitions['g'][her_indexes] = future_ag
+
+    # Add intermediate goal information for FWRL
+    imdt_samples = np.random.rand(batch_size)
+    intermediate_t = (t_samples * (1-imdt_samples)
+                      + future_all_t * imdt_samples).astype(int)
+    transitions['ag_im'] = episode_batch['ag'][episode_idxs, intermediate_t]
+    transitions['o_im'] = episode_batch['o'][episode_idxs, intermediate_t]
 
     # Reconstruct info dictionary for reward  computation.
     info = {}
@@ -237,6 +253,10 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
 def make_sample_fwrl_transitions(replay_strategy, replay_k, reward_fun):
     """Creates a sample function that can be used for FWRL experience replay.
     It samples intermediate states as part of experience.
+
+    TODO: Sample an intermediate state that is exactly mid way between t and
+    future_t. Optimize that way.
+    TODO: Is this like Binary search but for reinforcement learning?
 
     Args:
         replay_strategy (in ['future', 'none']): the HER replay strategy; if
