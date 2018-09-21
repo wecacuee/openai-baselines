@@ -23,7 +23,8 @@ def lower_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
                                target_net_fn: Callable,
                                main_net_fn: Callable,
                                post_process_target_ret: Callable=lambda x: x,
-                               gamma=None):
+                               gamma=None,
+                               maybe_relu=tf.nn.relu):
     """Returns a loss term as a function of inputs reusing the variables from
        variable_scope
 
@@ -66,7 +67,7 @@ def lower_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
     ).Q_tf
     return tf.reduce_mean(
         tf.square(
-            tf.nn.relu(
+            maybe_relu(
                 tf.stop_gradient(Q_via_i_clipped) - Q_best)))
 
 
@@ -74,12 +75,13 @@ def upper_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
                                target_net_fn: Callable,
                                main_net_fn: Callable,
                                post_process_target_ret: Callable=lambda x: x,
-                               gamma=None):
+                               gamma=None,
+                               maybe_relu=tf.nn.relu):
     """Returns a loss term as a function of inputs reusing the variables from
        variable_scope
 
     Impelements the loss function
-    L = | Qₘ(o, g', u) + γ Qₘ(o', g, μ(o', g)) - bounded(Qₜ(o, g, u)) |²₊
+    L = | Qₘ(o, g', u) + γ bounded(Qₜ(o', g, μ(o', g))) - bounded(Qₜ(o, g, u)) |²₊
     """
     # Check inputs for o, ag, g, reward
     for k in 'o ag g r'.split():
@@ -97,9 +99,11 @@ def upper_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
         .Q_tf +
         # How's the max being computed over u?
         # Because we are chosing the Q_pi_tf
-        # Qₘ(o', g, μ(o', g))
-        gamma * main_net_fn(inputs=dict(o=o_i, g=batch_tf['g'], u=batch_tf['u']))
-        .Q_pi_tf)
+        # Qₜ(o', g, μ(o', g))
+        gamma * post_process_target_ret(
+            target_net_fn(
+                inputs=dict(o=o_i, g=batch_tf['g'], u=batch_tf['u']))
+            .Q_pi_tf))
 
     # Qₜ(o, g, u)
     Q_best = target_net_fn(
@@ -108,8 +112,24 @@ def upper_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
     Q_best_clipped = post_process_target_ret(Q_best)
     return tf.reduce_mean(
         tf.square(
-            tf.nn.relu(
+            maybe_relu(
                 tf.stop_gradient(Q_via_i) - Q_best_clipped)))
+
+
+def identity(x):
+    return x
+
+tri_equality_loss_term_fwrl = partial(
+    lower_bound_loss_term_fwrl,
+    maybe_relu = identity
+)
+"""Returns a loss term as a function of inputs reusing the variables from
+    variable_scope
+
+Impelements the loss function
+L = | bounded(Qₜ(o, g', u) + γ Qₜ(o', g, μ(o', g))) - Qₘ(o, g, u) |²
+"""
+
 
 
 def step_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
@@ -146,12 +166,26 @@ qlearning_constrained_loss_term_fwrl = partial(
 This should work because of log term perspective but needs HER sampling.
 """
 
+
+qlearning_tri_eq_loss_term_fwrl = partial(
+    sum_loss_terms,
+    loss_terms_fns = [qlearning_loss_term, tri_equality_loss_term_fwrl])
+"""
+triangular equality should be better than inequality relationships.
+"""
+
 step_with_constraint_loss_term_fwrl = partial(
     sum_loss_terms,
     loss_terms_fns = [lower_bound_loss_term_fwrl, step_loss_term_fwrl,
                       upper_bound_loss_term_fwrl])
 """
 This should work without HER sampling because of one step reward consideration
+"""
+
+step_tri_eq_loss_term_fwrl = partial(
+    sum_loss_terms,
+    loss_terms_fns = [step_loss_term_fwrl, tri_equality_loss_term_fwrl])
+"""
 """
 
 
@@ -170,6 +204,15 @@ qlearning_step_constrained_loss_term_fwrl = partial(
                       lower_bound_loss_term_fwrl,
                       step_loss_term_fwrl,
                       upper_bound_loss_term_fwrl])
+"""
+This might work because of a balance between HER and one-step reward.
+"""
+
+qlearning_step_tri_eq_loss_term_fwrl = partial(
+    sum_loss_terms,
+    loss_terms_fns = [qlearning_loss_term,
+                      tri_equality_loss_term_fwrl,
+                      step_loss_term_fwrl])
 """
 This might work because of a balance between HER and one-step reward.
 """

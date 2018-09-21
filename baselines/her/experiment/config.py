@@ -14,8 +14,10 @@ from baselines.her.her import make_sample_her_transitions
 from baselines.her.fwrl import make_sample_fwrl_transitions
 from baselines.her.fwrl import (step_with_constraint_loss_term_fwrl,
                                 qlearning_constrained_loss_term_fwrl,
+                                qlearning_tri_eq_loss_term_fwrl,
                                 qlearning_step_loss_term_fwrl,
                                 qlearning_step_constrained_loss_term_fwrl,
+                                qlearning_step_tri_eq_loss_term_fwrl,
                                 step_lower_bound_loss_term_fwrl,
                                 step_upper_bound_loss_term_fwrl)
 
@@ -185,7 +187,9 @@ def simple_goal_subtract(a, b):
 available_loss_terms = dict(ddpg=qlearning_loss_term,
                             dqst=qlearning_step_loss_term_fwrl,
                             fwrl=qlearning_constrained_loss_term_fwrl,
+                            dqte=qlearning_tri_eq_loss_term_fwrl,
                             qlst=qlearning_step_constrained_loss_term_fwrl,
+                            qste=qlearning_step_tri_eq_loss_term_fwrl,
                             # Useless below. Do not work even with HER sampling
                             stfw=step_with_constraint_loss_term_fwrl,
                             stlo=step_lower_bound_loss_term_fwrl,
