@@ -270,6 +270,8 @@ class DDPG(object):
         ag, ag_2 = transitions['ag'], transitions['ag_2']
         transitions['o'], transitions['g'] = self._preprocess_og(o, ag, g)
         transitions['o_2'], transitions['g_2'] = self._preprocess_og(o_2, ag_2, g)
+        o_im, ag_im = transitions['o_im'], transitions['ag_im']
+        transitions['o_im'], transitions['ag_im'] = self._preprocess_og(o_im, ag_im, g)
 
         # NOTE: The stage_shapes.keys() are ['r', 'u', 'o', 'o_2', 'g', 'g_2']
         transitions_batch = [transitions[key] for key in self.stage_shapes.keys()]
