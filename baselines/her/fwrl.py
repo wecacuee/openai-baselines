@@ -45,8 +45,8 @@ def lower_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
     #       A: No.
     # TODO: Think more about it^^
     #o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
-    o_i = batch_tf['o_i']
-    g_i = batch_tf['g_i']
+    o_i = batch_tf['o_im']
+    g_i = batch_tf['ag_im']
 
     Q_via_i = (
         # Qₜ(o, g', u)
@@ -87,8 +87,8 @@ def upper_bound_loss_term_fwrl(batch_tf: Mapping[str, tf.Tensor],
             k, batch_tf.keys())
 
     #o_i, g_i = random_shuffle(batch_tf['o'], batch_tf['ag'], axis=1)
-    o_i = batch_tf['o_i']
-    g_i = batch_tf['g_i']
+    o_i = batch_tf['o_im']
+    g_i = batch_tf['ag_im']
 
     Q_via_i = (
         # Qₘ(o, g', u)
