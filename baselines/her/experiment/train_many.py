@@ -47,7 +47,7 @@ def train_many(**kwargs):
 train_many_vars = partial(
     train_many,
     env = Variations([
-        "FetchSlide-v1"
+        "FetchSlide-v1",
         "FetchReach-v1",
         "FetchPush-v1",
         ]),
