@@ -47,7 +47,7 @@ class MpiAdam(object):
             thetalocal = self.getflat()
             thetaroot = np.empty_like(thetalocal)
             self.comm.Bcast(thetaroot, root=0)
-            assert np.allclose(thetaroot, thetalocal), (thetaroot, thetalocal)
+            #assert np.allclose(thetaroot, thetalocal), (thetaroot, thetalocal)
 
 @U.in_session
 def test_MpiAdam():
