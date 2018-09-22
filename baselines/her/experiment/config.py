@@ -8,6 +8,7 @@ from inspect import signature, Parameter
 import numpy as np
 import gym
 
+import baselines.her.pathrewardenv
 from baselines import logger
 from baselines.her.ddpg import DDPG, qlearning_loss_term
 from baselines.her.her import make_sample_her_transitions
@@ -168,6 +169,7 @@ def configure_her(params):
     # Prepare configuration for HER.
     her_params = {
         'reward_fun': reward_fun,
+        'reward_type': env.reward_type
     }
     for name in ['replay_strategy', 'replay_k']:
         her_params[name] = params[name]
@@ -187,10 +189,12 @@ def simple_goal_subtract(a, b):
 available_loss_terms = dict(ddpg=qlearning_loss_term,
                             dqst=qlearning_step_loss_term_fwrl,
                             fwrl=qlearning_constrained_loss_term_fwrl,
-                            dqte=qlearning_tri_eq_loss_term_fwrl,
                             qlst=qlearning_step_constrained_loss_term_fwrl,
-                            qste=qlearning_step_tri_eq_loss_term_fwrl,
                             # Useless below. Do not work even with HER sampling
+                            # Experiment 38f4625
+                            qste=qlearning_step_tri_eq_loss_term_fwrl,
+                            dqte=qlearning_tri_eq_loss_term_fwrl,
+                            # Experiment 3f1eafe
                             stfw=step_with_constraint_loss_term_fwrl,
                             stlo=step_lower_bound_loss_term_fwrl,
                             stup=step_upper_bound_loss_term_fwrl)

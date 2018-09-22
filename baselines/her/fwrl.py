@@ -2,7 +2,9 @@ from typing import Mapping, Callable
 from functools import partial
 import tensorflow as tf
 import numpy as np
+
 from .ddpg import qlearning_loss_term
+from .pathrewardenv import PathRewardEnv
 
 
 def random_shuffle(*args, axis=1):
@@ -235,7 +237,7 @@ Upper bound with step
 
 
 def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
-                             future_p=None, reward_fun=None):
+                             future_p=None, reward_fun=None, reward_type=None):
     """episode_batch is {key: array(buffer_size x T x dim_key)}
     """
     assert future_p is not None
@@ -280,10 +282,17 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
         if key.startswith('info_'):
             info[key.replace('info_', '')] = value
 
-    # Re-compute reward since we may have substituted the goal.
-    reward_params = {k: transitions[k] for k in ['ag_2', 'g']}
-    reward_params['info'] = info
-    transitions['r'] = reward_fun(**reward_params)
+
+    if reward_type == PathRewardEnv.SPARSE_PATH:
+        # No need to recompute rewards because they are independent of the
+        # goal location
+        # transitions['r'] = transitions['r']
+        pass
+    else:
+        # Re-compute reward since we may have substituted the goal.
+        reward_params = {k: transitions[k] for k in ['ag_2', 'g']}
+        reward_params['info'] = info
+        transitions['r'] = reward_fun(**reward_params)
 
     transitions = {k: transitions[k].reshape(batch_size, *transitions[k].shape[1:])
                    for k in transitions.keys()}
@@ -293,7 +302,7 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
     return transitions
 
 
-def make_sample_fwrl_transitions(replay_strategy, replay_k, reward_fun):
+def make_sample_fwrl_transitions(replay_strategy, replay_k, reward_fun, reward_type):
     """Creates a sample function that can be used for FWRL experience replay.
     It samples intermediate states as part of experience.
 
@@ -315,5 +324,4 @@ def make_sample_fwrl_transitions(replay_strategy, replay_k, reward_fun):
         future_p = 0
 
     return partial(_sample_fwrl_transitions, future_p = future_p,
-                   reward_fun=reward_fun)
-
+                   reward_fun=reward_fun, reward_type=reward_type)

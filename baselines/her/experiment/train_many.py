@@ -47,11 +47,16 @@ def train_many(**kwargs):
 train_many_vars = partial(
     train_many,
     env = Variations([
+        # "FetchReach-v1",
+        # "FetchPush-v1",
         "FetchSlide-v1",
-        "FetchReach-v1",
-        "FetchPush-v1",
+        "FetchPickAndPlace-v1",
+        "HandReach-v0",
+        "HandManipulateBlock-v1",
+        "HandManipulatePen-v1",
+        "HandManipulateEgg-v1",
         ]),
-    loss_term = Variations(["fwrl", "ddpg", "dqst", "dqte", "qlst", "qste"]),
+    loss_term = Variations(["fwrl", "ddpg", "dqst", "qlst"]),
     replay_strategy = Variations(["future"]))
 
 

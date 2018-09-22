@@ -1,5 +1,7 @@
 import os
 import sys
+from pathlib import Path
+import pickle
 
 import click
 import numpy as np
@@ -24,13 +26,17 @@ def mpi_average(value):
     return mpi_moments(np.array(value))[0]
 
 
+def get_best_policy_path(logger, basename='policy_best.pkl'):
+    return os.path.join(logger.get_dir(), basename)
+
+
 def train(policy, rollout_worker, evaluator,
           n_epochs, n_test_rollouts, n_cycles, n_batches, policy_save_interval,
           save_policies, **kwargs):
     rank = MPI.COMM_WORLD.Get_rank()
 
     latest_policy_path = os.path.join(logger.get_dir(), 'policy_latest.pkl')
-    best_policy_path = os.path.join(logger.get_dir(), 'policy_best.pkl')
+    best_policy_path = get_best_policy_path(logger)
     periodic_policy_path = os.path.join(logger.get_dir(), 'policy_{}.pkl')
 
     logger.info("Training...")
@@ -142,7 +148,11 @@ def launch(
         logger.warn()
 
     dims = config.configure_dims(params)
-    policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
+    if Path(get_best_policy_path(logger)).exists():
+        policy = pickle.load(f)
+        assert params['env_name'] == policy.info['env_name']
+    else:
+        policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
 
     rollout_params = {
         'exploit': False,

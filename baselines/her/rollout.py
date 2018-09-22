@@ -38,6 +38,7 @@ class RolloutWorker:
 
         self.success_history = deque(maxlen=history_len)
         self.Q_history = deque(maxlen=history_len)
+        self.ag_g_dist_history = deque(maxlen=history_len)
 
         self.n_episodes = 0
         self.g = np.empty((self.rollout_batch_size, self.dims['g']), np.float32)  # goals
@@ -75,8 +76,10 @@ class RolloutWorker:
 
         # generate episodes
         obs, achieved_goals, acts, goals, successes = [], [], [], [], []
+        rewards = []
         info_values = [np.empty((self.T, self.rollout_batch_size, self.dims['info_' + key]), np.float32) for key in self.info_keys]
         Qs = []
+        ag_g_dists = []
         for t in range(self.T):
             policy_output = self.policy.get_actions(
                 o, ag, self.g,
@@ -88,6 +91,8 @@ class RolloutWorker:
             if self.compute_Q:
                 u, Q = policy_output
                 Qs.append(Q)
+                ag_g_dists.append(
+                    np.mean(np.sqrt(np.sum((ag - self.g)**2, axis=1))))
             else:
                 u = policy_output
 
@@ -97,6 +102,7 @@ class RolloutWorker:
 
             o_new = np.empty((self.rollout_batch_size, self.dims['o']))
             ag_new = np.empty((self.rollout_batch_size, self.dims['g']))
+            rew = np.empty((self.rollout_batch_size,))
             success = np.zeros(self.rollout_batch_size)
             # compute new states and observations
             for i in range(self.rollout_batch_size):
@@ -107,7 +113,7 @@ class RolloutWorker:
                     # dict(observation=xx, achieved_goal=xx, desired_goal=xx)
                     # the dimensions of observation and achieved_goals are
                     # different.
-                    curr_o_new, _, _, info = self.envs[i].step(u[i])
+                    curr_o_new, rew[i], _, info = self.envs[i].step(u[i])
                     if 'is_success' in info:
                         success[i] = info['is_success']
                     o_new[i] = curr_o_new['observation']
@@ -130,6 +136,7 @@ class RolloutWorker:
             successes.append(success.copy())
             acts.append(u.copy())
             goals.append(self.g.copy())
+            rewards.append(rew.copy())
             o[...] = o_new
             ag[...] = ag_new
         obs.append(o.copy())
@@ -142,7 +149,8 @@ class RolloutWorker:
         episode = dict(o=obs,
                        u=acts,
                        g=goals,
-                       ag=achieved_goals)
+                       ag=achieved_goals,
+                       r=rewards)
         for key, value in zip(self.info_keys, info_values):
             episode['info_{}'.format(key)] = value
 
@@ -153,6 +161,7 @@ class RolloutWorker:
         self.success_history.append(success_rate)
         if self.compute_Q:
             self.Q_history.append(np.mean(Qs))
+            self.ag_g_dist_history.append(np.mean(ag_g_dists))
         self.n_episodes += self.rollout_batch_size
 
         # NOTE: Dimensions are swapped here:
@@ -165,6 +174,7 @@ class RolloutWorker:
         """
         self.success_history.clear()
         self.Q_history.clear()
+        self.ag_g_dist_history.clear()
 
     def current_success_rate(self):
         return np.mean(self.success_history)
@@ -185,6 +195,7 @@ class RolloutWorker:
         logs += [('success_rate', np.mean(self.success_history))]
         if self.compute_Q:
             logs += [('mean_Q', np.mean(self.Q_history))]
+            logs += [('ag_g_dist', np.mean(self.ag_g_dist_history))]
         logs += [('episode', self.n_episodes)]
 
         if prefix is not '' and not prefix.endswith('/'):
