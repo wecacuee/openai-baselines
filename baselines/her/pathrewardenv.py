@@ -2,6 +2,7 @@ import sys
 import numpy as np
 
 import gym
+import gym.env.robotics
 from gym import Wrapper
 
 
