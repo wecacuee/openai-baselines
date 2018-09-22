@@ -149,13 +149,18 @@ def launch(
 
     dims = config.configure_dims(params)
     best_policy_path = get_best_policy_path(logger)
+    policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
     if rank == 0 and Path(best_policy_path).exists():
         logger.warn('Loading policy from path ' + best_policy_path)
         with open(best_policy_path, 'rb') as f:
-            policy = pickle.load(f)
+            policy_backup = pickle.load(f)
+            init_main_net_op = list(
+                map(lambda v: v[0].assign(v[1]), zip(policy.main_vars,
+                                                     policy_backup.main_vars)))
+            policy.sess.run(init_main_net_op)
+            policy._sync_optimizers()
+            policy._init_target_net()
         assert params['env_name'] == policy.info['env_name']
-    else:
-        policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
 
     rollout_params = {
         'exploit': False,
