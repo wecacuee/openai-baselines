@@ -47,10 +47,10 @@ def new_name_and_entry_point(old_env_name,
         PathRewardEnv, getattr(gym.envs.robotics, gym_name))
 
 
-for old_env_name in ("FetchPush-v1 FetchReach-v1 FetchSlide-v1"
-                     "FetchPickAndPlace-v1"
-                     "HandReach-v0 HandManipulateBlock-v0 HandManipulateEgg-v0"
-                     "HandManipulatePen-v0").split():
+for old_env_name in ("""FetchPush-v1 FetchReach-v1 FetchSlide-v1
+                     FetchPickAndPlace-v1
+                     HandReach-v0 HandManipulateBlock-v0 HandManipulateEgg-v0
+                     HandManipulatePen-v0""").split():
     new_class_name, new_name, class_ = new_name_and_entry_point(old_env_name)
     # Add the class as an entry point
     setattr(sys.modules[__name__], new_class_name, class_)
