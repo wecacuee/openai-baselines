@@ -33,16 +33,25 @@ def apply_wrapper(wrapper, env):
     return env_wrapper
 
 
+def gym_from_env_name(env_name,
+                      mapping = dict(
+                          HandManipulateBlock="HandBlockEnv",
+                          HandManipulateEgg="HandEggEnv",
+                          HandManipulatePen="HandPenEnv"),
+                      gym_name_template = '{env_name}Env'):
+    return mapping.get(env_name, gym_name_template.format(env_name=env_name))
+
+
 def new_name_and_entry_point(old_env_name,
-                             class_fmt = '{env_name}EnvPR',
-                             name_fmt = '{env_name}PR-{version}',
-                             gym_name_template = '{env_name}Env'):
+                             class_name_fn = '{env_name}EnvPR'.format,
+                             name_fn = '{env_name}PR-{version}'.format,
+                             gym_name_fn = gym_from_env_name):
     parts = old_env_name.split("-")
     env_name = "-".join(parts[:-1])
     version = parts[-1]
-    new_class_name = class_fmt.format(env_name=env_name)
-    new_name = name_fmt.format(env_name=env_name, version=version)
-    gym_name = gym_name_template.format(env_name=env_name)
+    new_class_name = class_name_fn(env_name=env_name)
+    new_name = name_fn(env_name=env_name, version=version)
+    gym_name = gym_name_fn(env_name=env_name)
     return new_class_name, new_name, apply_wrapper(
         PathRewardEnv, getattr(gym.envs.robotics, gym_name))
 
