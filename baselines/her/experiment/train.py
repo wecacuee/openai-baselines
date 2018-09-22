@@ -154,7 +154,7 @@ def launch(
     if rank == 0 and Path(best_policy_path).exists():
         logger.warn('Loading policy from path ' + best_policy_path)
         with open(best_policy_path, 'rb') as f:
-            with tf.variables_scope("backup") as vs:
+            with tf.variable_scope("backup") as vs:
                 policy_backup = pickle.load(f)
         init_main_net_op = list(
             map(lambda v: v[0].assign(v[1]), zip(policy.main_vars,
