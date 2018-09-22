@@ -52,7 +52,7 @@ train_many_vars = partial(
         "FetchPush-v1",
         ]),
     loss_term = Variations(["fwrl", "ddpg", "dqst", "dqte", "qlst", "qste"]),
-    replay_strategy = Variations(["future"])
+    replay_strategy = Variations(["future"]))
 
 
 main = partial(train_many_vars, num_cpu = 6)
