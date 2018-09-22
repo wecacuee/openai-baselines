@@ -148,8 +148,11 @@ def launch(
         logger.warn()
 
     dims = config.configure_dims(params)
-    if Path(get_best_policy_path(logger)).exists():
-        policy = pickle.load(f)
+    best_policy_path = get_best_policy_path(logger)
+    if Path(best_policy_path).exists():
+        logger.warn('Loading policy from path ' + best_policy_path)
+        with open(best_policy_path) as f:
+            policy = pickle.load(f)
         assert params['env_name'] == policy.info['env_name']
     else:
         policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)

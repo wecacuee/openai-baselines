@@ -98,7 +98,8 @@ DEFAULT_PARAMS = {
     'seed': 0,
     'replay_strategy': 'future',
     'policy_save_interval': 5,
-    'clip_return': True
+    'clip_return': True,
+    'reward_type': 'sparse'
 }
 
 
@@ -169,9 +170,8 @@ def configure_her(params):
     # Prepare configuration for HER.
     her_params = {
         'reward_fun': reward_fun,
-        'reward_type': env.reward_type
     }
-    for name in ['replay_strategy', 'replay_k']:
+    for name in ['replay_strategy', 'replay_k', 'reward_type']:
         her_params[name] = params[name]
         params['_' + name] = her_params[name]
         del params[name]
