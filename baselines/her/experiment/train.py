@@ -151,7 +151,7 @@ def launch(
     dims = config.configure_dims(params)
     best_policy_path = get_best_policy_path(logger)
     policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
-    if rank == 0 and Path(best_policy_path).exists():
+    if False and rank == 0 and Path(best_policy_path).exists():
         logger.warn('Loading policy from path ' + best_policy_path)
         with open(best_policy_path, 'rb') as f:
             with tf.variable_scope("backup") as vs:
