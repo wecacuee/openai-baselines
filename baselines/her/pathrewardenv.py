@@ -57,5 +57,5 @@ for old_env_name in ("FetchPush-v1 FetchReach-v1 FetchSlide-v1"
     # Register the entry point with gym
     gym.envs.registration.register(
         id=new_name,
-        entry_point=".".join(__package__, new_class_name),
+        entry_point=".".join((__package__, new_class_name)),
         kwargs=dict(reward_type=PathRewardEnv.SPARSE_PATH))
