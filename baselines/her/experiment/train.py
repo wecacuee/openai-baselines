@@ -149,9 +149,9 @@ def launch(
 
     dims = config.configure_dims(params)
     best_policy_path = get_best_policy_path(logger)
-    if Path(best_policy_path).exists():
+    if rank == 0 and Path(best_policy_path).exists():
         logger.warn('Loading policy from path ' + best_policy_path)
-        with open(best_policy_path) as f:
+        with open(best_policy_path, 'rb') as f:
             policy = pickle.load(f)
         assert params['env_name'] == policy.info['env_name']
     else:
