@@ -76,7 +76,7 @@ train_loss_term_weights = partial(
                      1-(i+j)/min(1,i+j),
                      j/min(1,i+j),
                      j/min(1,i+j)])
-         for i, j in product(range(3), repeat=3)]))
+         for i, j in product(range(3), repeat=2)]))
 
 
 train_itmdt_sampling = partial(
