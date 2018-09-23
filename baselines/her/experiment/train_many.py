@@ -64,7 +64,8 @@ train_many_vars = partial(
 train_her_fwrl_path_reward = partial(
     train_many,
     env = Variations(["FetchReachPR-v1", "FetchReach-v1"]),
-    loss_term = Variations(["fwrl", "ddpg"]))
+    loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
+
 
 train_loss_term_weights = partial(
     train_many,

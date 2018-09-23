@@ -2,6 +2,7 @@ if __package__ is None:
     __package__ = "baselines.her"
 
 from functools import partial, reduce, wraps
+from inspect import signature, Parameter
 
 import sys
 import os
@@ -83,11 +84,12 @@ def plot_results(
         dirs,
         xdatakey = "epoch",
         metrics = """test/success_rate
-        test/mean_Q train/critic_loss """.split(),
+        test/mean_Q train/critic_loss test/ag_g_dist""".split(),
         translations={"epoch": "Epoch",
                       "test/success_rate": "Success rate (test)",
                       "test/mean_Q": "Q (test)",
                       "train/critic_loss" : "Critic loss (train)",
+                      "test/ag_g_dist": "Distance from goal (test)",
         },
         pattern = "./progress.csv",
         figsize = default_figsize):
@@ -130,6 +132,27 @@ main_grouped = partial(plot_results_grouped,
                        '/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/',
                        ['*{}-v1-*/'.format(env)
                         for env in "_FetchPush _FetchReach _FetchSlide".split()])
+
+
+def getdefarg(f, k):
+    return signature(f).parameters[k].default
+
+
+def merged(d1, d2):
+    d1c = d1.copy()
+    d1c.update(d2)
+    return d1c
+
+
+plot_results_04a8fc6 = partial(
+    plot_results,
+    dirs = glob("/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/04a8fc6-*-FetchSlide-v1-fwrl-future/"),
+    translations = merged(getdefarg(plot_results, 'translations'),
+                          {"814a3d24": "[0.6, 0.2, 0.2]",
+                           "cc7daced": "[0.2, 0.4, 0.4]",
+                           "c26d68c1": "[0.8, 0.1, 0.1]",
+                          "923e5525": "[0.4, 0.3, 0.3]"}))
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

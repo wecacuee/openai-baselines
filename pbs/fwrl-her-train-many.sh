@@ -22,18 +22,6 @@ git pull
 . setup.sh
 python <<EOF
 from baselines.her.experiment.train_many import train_many_vars, Variations
-train_many_vars(gitrev="38f4625",
-    env = Variations([
-        # "FetchReach-v1",
-        # "FetchPush-v1",
-        # "FetchSlide-v1",
-        "FetchPickAndPlace-v1",
-        "HandReach-v0",
-        "HandManipulateBlock-v1",
-        "HandManipulatePen-v1",
-        "HandManipulateEgg-v1",
-        ]),
-    num_cpu = 6
-)
+train_many_vars(gitrev="38f4625", num_cpu = 6)
 EOF
 echo "end of pbs script"

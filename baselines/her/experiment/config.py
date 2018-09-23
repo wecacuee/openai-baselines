@@ -15,7 +15,9 @@ from baselines.her.pathrewardenv import PathRewardEnv, is_wrapper_instance
 from baselines import logger
 from baselines.her.ddpg import DDPG, qlearning_loss_term
 from baselines.her.her import make_sample_her_transitions
-from baselines.her.fwrl import make_sample_fwrl_transitions
+from baselines.her.fwrl import (make_sample_fwrl_transitions,
+                                sample_uniform,
+                                compute_middle)
 from baselines.her.fwrl import (step_with_constraint_loss_term_fwrl,
                                 qlearning_constrained_loss_term_fwrl,
                                 qlearning_tri_eq_loss_term_fwrl,
@@ -69,7 +71,24 @@ def hashkwargs(l=8, **kwargs):
 DEFAULT_ENV_PARAMS = {
     'FetchReach-v1': {
         'n_cycles': 10,
+        'n_epochs': 10,
     },
+    'FetchPush-v1': {
+        'n_epochs': 20
+    },
+    'FetchSlide-v1': {
+        'n_epochs': 200
+    },
+    'FetchReachPR-v1': {
+        'n_cycles': 10,
+        'n_epochs': 10,
+    },
+    'FetchPushPR-v1': {
+        'n_epochs': 20
+    },
+    'FetchSlidePR-v1': {
+        'n_epochs': 200
+    }
 }
 
 
@@ -118,7 +137,8 @@ DEFAULT_PARAMS = {
     'replay_strategy': 'future',
     'policy_save_interval': 5,
     'clip_return': True,
-    'reward_type': ''
+    'reward_type': '',
+    'intermediate_sampling': 'uniform', # {uniform|middle}'
 }
 
 
@@ -236,6 +256,16 @@ def loss_term_from_str(
         key,
         available = available_loss_terms):
     return available[key]
+
+
+available_intermediate_sampling = dict(uniform=sample_uniform,
+                                       middle=compute_middle)
+
+
+def intermediate_sampling_from_str(
+        key,
+        available = available_intermediate_sampling):
+    return available_intermediate_sampling[key]
 
 
 def get_ddpg_params(dims, params, reuse=False, use_mpi=True, clip_return=True):

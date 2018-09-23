@@ -240,8 +240,24 @@ Upper bound with step
 """
 
 
+def sample_uniform(t_samples, future_all_t):
+    batch_size = t_samples.shape[0]
+    imdt_samples = np.random.rand(batch_size)
+    intermediate_t = (t_samples * (1 - imdt_samples) +
+                      future_all_t * imdt_samples).astype(int)
+    return intermediate_t
+
+
+def compute_middle(t_samples, future_all_t):
+    imdt_samples = 0.5
+    intermediate_t = (t_samples * (1 - imdt_samples) +
+                      future_all_t * imdt_samples).astype(int)
+    return intermediate_t
+
+
 def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
-                             future_p=None, reward_fun=None, reward_type=None):
+                             future_p=None, reward_fun=None, reward_type=None,
+                             intermediate_sampling=sample_uniform):
     """episode_batch is {key: array(buffer_size x T x dim_key)}
     """
     assert future_p is not None
@@ -274,9 +290,7 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
     transitions['g'][her_indexes] = future_ag
 
     # Add intermediate goal information for FWRL
-    imdt_samples = np.random.rand(batch_size)
-    intermediate_t = (t_samples * (1-imdt_samples)
-                      + future_all_t * imdt_samples).astype(int)
+    intermediate_t = intermediate_sampling(t_samples, future_t)
     transitions['ag_im'] = episode_batch['ag'][episode_idxs, intermediate_t]
     transitions['o_im'] = episode_batch['o'][episode_idxs, intermediate_t]
 
