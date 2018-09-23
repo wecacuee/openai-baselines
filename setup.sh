@@ -28,19 +28,21 @@ fi
 
 export MID_DIR=/z/home/dhiman/mid/
 PIPDIR=$MID_DIR/$PROJECT_NAME/build
-PIPDIRVERSIONED=$PIPDIR-0.3.0
 mkdir -p $PIPDIR
 PYPATH=$PIPDIR/lib/python3.6/site-packages/
 prependonce PYTHONPATH "$PYPATH"
 prependonce PATH "$PIPDIR/bin"
 . ${THISDIR}/setup-mujoco.sh
 
-if [[ ! -d "$PYPATH"  ]]; then
+if [[ ! -d "$PYPATH" ]]; then
     PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
 fi
+
+
 if [[ "$1" == "ENV" ]]; then
     prependonce PYTHONPATH "$THISDIR"
 else
+    PIPDIRVERSIONED=$THISDIR/build
     mkdir -p $PIPDIRVERSIONED
     prependonce PYTHONPATH "$PIPDIRVERSIONED/lib/python3.6/site-packages/"
     prependonce PATH "$PIPDIRVERSIONED/bin"
