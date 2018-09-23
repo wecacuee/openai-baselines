@@ -72,17 +72,17 @@ train_loss_term_weights = partial(
     env = "FetchPush-v1",
     loss_term = "qlst",
     loss_term_weights_json = Variations(
-        [json.dumps([i/min(1,i+j),
-                     1-(i+j)/min(1,i+j),
-                     j/min(1,i+j),
-                     j/min(1,i+j)])
+        [json.dumps([i/max(1,i+j),
+                     1-(i+j)/max(1,i+j),
+                     j/max(1,i+j),
+                     j/max(1,i+j)])
          for i, j in product(range(3), repeat=2)]))
 
 
 train_intmdt_sampling = partial(
     train_many,
     env = "FetchPush-v1",
-    loss_terms = "fwrl",
+    loss_term = "fwrl",
     intermediate_sampling = Variations([
         'middle', 'uniform']))
 
