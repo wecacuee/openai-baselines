@@ -79,7 +79,7 @@ train_loss_term_weights = partial(
          for i, j in product(range(3), repeat=2)]))
 
 
-train_itmdt_sampling = partial(
+train_intmdt_sampling = partial(
     train_many,
     env = "FetchPush-v1",
     loss_terms = "fwrl",
