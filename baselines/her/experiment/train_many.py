@@ -53,9 +53,9 @@ train_many_vars = partial(
         "FetchSlide-v1",
         "FetchPickAndPlace-v1",
         "HandReach-v0",
-        "HandManipulateBlock-v1",
-        "HandManipulatePen-v1",
-        "HandManipulateEgg-v1",
+        "HandManipulateBlock-v0",
+        "HandManipulatePen-v0",
+        "HandManipulateEgg-v0",
         ]),
     loss_term = Variations(["fwrl", "ddpg", "dqst", "qlst"]),
     replay_strategy = Variations(["future"]))
