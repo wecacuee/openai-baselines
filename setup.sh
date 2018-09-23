@@ -14,7 +14,7 @@ if [ -f /etc/profile.d/modules.sh ]; then
 fi
 
 export MID_DIR=/z/home/dhiman/mid/
-PIPDIR=$MID_DIR/$PROJECT_NAME/build/
+PIPDIR=$MID_DIR/$PROJECT_NAME/build
 mkdir -p $PIPDIR
 PYPATH=$PIPDIR/lib/python3.6/site-packages/
 if [[ "$PYTHONPATH" != *"$PYPATH"* ]]; then
