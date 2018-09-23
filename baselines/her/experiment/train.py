@@ -20,11 +20,11 @@ from subprocess import CalledProcessError
 
 
 def mpi_average(value):
-    if not len(value):
+    if isinstance(value, list) and not len(value):
         value = [0.]
     if not isinstance(value, list):
         value = [value]
-    return mpi_moments(np.array(value))[0]
+    return mpi_moments(np.asarray(value))[0]
 
 
 def get_best_policy_path(logger, basename='policy_best.pkl'):
