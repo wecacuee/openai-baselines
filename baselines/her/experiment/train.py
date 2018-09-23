@@ -227,6 +227,10 @@ def launch(
               type=click.Choice(list(config.available_intermediate_sampling.keys())),
               default='uniform',
               help='Sampling strategy for the FWRL intermediate state')
+@click.option('--exp_name',
+              type=str,
+              default='',
+              help='name for the experiment')
 def main(**kwargs):
     return launch(**kwargs)
 

@@ -38,6 +38,8 @@ def train_many(**kwargs):
     variations, kwargs = separate_variations(kwargs)
     for confname, conf in config_vars_to_configs(variations).items():
         conf.update(kwargs)
+        if 'exp_name' not in conf:
+            conf['exp_name'] = confname
         call_train(**conf)
         logdirs.append(
             DEFAULT_PARAMS['logdir'](**dict(DEFAULT_PARAMS, **conf)))
@@ -47,6 +49,7 @@ def train_many(**kwargs):
 
 train_many_vars = partial(
     train_many,
+    exp_name = 'many_envs',
     env = Variations([
         # "FetchReach-v1",
         # "FetchPush-v1",
@@ -63,12 +66,14 @@ train_many_vars = partial(
 
 train_her_fwrl_path_reward = partial(
     train_many,
+    exp_name = 'her_fwrl_path_reward',
     env = Variations(["FetchReachPR-v1", "FetchReach-v1"]),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
 
 train_loss_term_weights = partial(
     train_many,
+    exp_name = 'loss_term_weights',
     env = "FetchPush-v1",
     loss_term = "qlst",
     loss_term_weights_json = Variations(
@@ -81,6 +86,7 @@ train_loss_term_weights = partial(
 
 train_intmdt_sampling = partial(
     train_many,
+    exp_name = 'intmdt_sampling',
     env = "FetchPush-v1",
     loss_term = "fwrl",
     intermediate_sampling = Variations([
