@@ -207,8 +207,8 @@ Experiments show that step term does better than step + constraints. Does step
 qlearning_step_constrained_loss_term_fwrl = partial(
     sum_loss_terms,
     loss_terms_fns = [qlearning_loss_term,
-                      lower_bound_loss_term_fwrl,
                       step_loss_term_fwrl,
+                      lower_bound_loss_term_fwrl,
                       upper_bound_loss_term_fwrl])
 """
 This might work because of a balance between HER and one-step reward.
@@ -290,7 +290,7 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
     transitions['g'][her_indexes] = future_ag
 
     # Add intermediate goal information for FWRL
-    intermediate_t = intermediate_sampling(t_samples, future_t)
+    intermediate_t = intermediate_sampling(t_samples, future_all_t)
     transitions['ag_im'] = episode_batch['ag'][episode_idxs, intermediate_t]
     transitions['o_im'] = episode_batch['o'][episode_idxs, intermediate_t]
 

@@ -223,6 +223,10 @@ def launch(
 @click.option('--loss_term_weights_json',
               type=str, default='[]',
               help='Weights for different components of the loss term')
+@click.option('--intermediate_sampling',
+              type=click.Choice(list(config.available_intermediate_sampling.keys())),
+              default='uniform',
+              help='Sampling strategy for the FWRL intermediate state')
 def main(**kwargs):
     return launch(**kwargs)
 

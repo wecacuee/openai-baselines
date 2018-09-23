@@ -35,7 +35,9 @@ prependonce PYTHONPATH "$PYPATH"
 prependonce PATH "$PIPDIR/bin"
 . ${THISDIR}/setup-mujoco.sh
 
-PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
+if [[ ! -d "$PYPATH"  ]]; then
+    PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
+fi
 if [[ "$1" == "ENV" ]]; then
     prependonce PYTHONPATH "$THISDIR"
 else

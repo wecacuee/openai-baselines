@@ -69,9 +69,22 @@ train_her_fwrl_path_reward = partial(
 
 train_loss_term_weights = partial(
     train_many,
-    env = "FetchSlide-v1",
-    loss_term = "fwrl",
+    env = "FetchPush-v1",
+    loss_term = "qlst",
     loss_term_weights_json = Variations(
-        [json.dumps([i/5, (5-i)/10, (5-i)/10]) for i in range(1,5)]))
+        [json.dumps([i/min(1,i+j),
+                     1-(i+j)/min(1,i+j),
+                     j/min(1,i+j),
+                     j/min(1,i+j)])
+         for i, j in product(range(3), repeat=3)]))
+
+
+train_itmdt_sampling = partial(
+    train_many,
+    env = "FetchPush-v1",
+    loss_terms = "fwrl",
+    intermediate_sampling = Variations([
+        'middle', 'uniform']))
+
 
 main = partial(train_many_vars, num_cpu = 6)
