@@ -63,9 +63,11 @@ def common_substr(strs, return_diffs=False):
     return (comm, diffs) if return_diffs else comm
 
 
-def diff_substr(strs, s):
-    _, diffs = common_substr(map(list, strs), return_diffs=True)
-    return "".join(diffs[strs.index(s)])
+def diff_substr(strs, s, splitre="[-_/]", joinstr="-"):
+    import re
+    _, diffs = common_substr((re.split(splitre, s) for s in strs),
+                             return_diffs=True)
+    return joinstr.join(diffs[strs.index(s)])
 
 
 def mm2inches(mm):

@@ -8,7 +8,7 @@ from inspect import signature, Parameter
 import numpy as np
 import gym
 
-import baselines.her.pathrewardenv
+from baselines.her.pathrewardenv import PathRewardEnv, is_wrapper_instance
 from baselines import logger
 from baselines.her.ddpg import DDPG, qlearning_loss_term
 from baselines.her.her import make_sample_her_transitions
@@ -99,7 +99,7 @@ DEFAULT_PARAMS = {
     'replay_strategy': 'future',
     'policy_save_interval': 5,
     'clip_return': True,
-    'reward_type': 'sparse'
+    'reward_type': ''
 }
 
 
@@ -160,7 +160,7 @@ def log_params(params, logger=logger):
         logger.info('{}: {}'.format(key, params[key]))
 
 
-def configure_her(params):
+def get_her_params(params):
     env = cached_make_env(params['make_env'])
     env.reset()
 
@@ -171,12 +171,20 @@ def configure_her(params):
     her_params = {
         'reward_fun': reward_fun,
     }
+    if is_wrapper_instance(env, PathRewardEnv):
+        params['reward_type'] = PathRewardEnv.SPARSE_PATH
+
     for name in ['replay_strategy', 'replay_k', 'reward_type']:
         her_params[name] = params[name]
         params['_' + name] = her_params[name]
         del params[name]
+    return her_params
+
+
+def configure_her(params):
     #sample_her_transitions = make_sample_her_transitions(**her_params)
-    sample_her_transitions = make_sample_fwrl_transitions(**her_params)
+    sample_her_transitions = make_sample_fwrl_transitions(
+        **get_her_params(params))
 
     return sample_her_transitions
 
@@ -206,7 +214,7 @@ def loss_term_from_str(
     return available[key]
 
 
-def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
+def get_ddpg_params(dims, params, reuse=False, use_mpi=True, clip_return=True):
     sample_her_transitions = configure_her(params)
     # Extract relevant parameters.
     gamma = params['gamma']
@@ -232,7 +240,15 @@ def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
     ddpg_params['info'] = {
         'env_name': params['env_name'],
     }
-    policy = DDPG(reuse=reuse, **ddpg_params, use_mpi=use_mpi)
+    ddpg_params['reuse'] = reuse
+    ddpg_params['use_mpi'] = use_mpi
+    return ddpg_params
+
+
+def configure_ddpg(dims, params, reuse=False, use_mpi=True, clip_return=True):
+    ddpg_params = get_ddpg_params(dims, params, reuse=False, use_mpi=True,
+                                  clip_return=True)
+    policy = DDPG(**ddpg_params)
     return policy
 
 

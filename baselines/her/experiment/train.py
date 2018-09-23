@@ -20,7 +20,7 @@ from subprocess import CalledProcessError
 
 
 def mpi_average(value):
-    if value == []:
+    if not len(value):
         value = [0.]
     if not isinstance(value, list):
         value = [value]
@@ -131,8 +131,8 @@ def launch(
     rank_seed = seed + 1000000 * rank
     set_global_seeds(rank_seed)
 
-    with open(os.path.join(logger.get_dir(), 'params.json'), 'w') as f:
-        json.dump(params, f)
+    # This will be used for saving a json copy on file system
+    dumpable_params = params.copy()
     params = config.prepare_params(params)
     config.log_params(params, logger=logger)
 
@@ -150,19 +150,25 @@ def launch(
 
     dims = config.configure_dims(params)
     best_policy_path = get_best_policy_path(logger)
-    policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
-    if False and rank == 0 and Path(best_policy_path).exists():
+    if rank == 0 and Path(best_policy_path).exists():
+        with open(os.path.join(logger.get_dir(), 'params.json'), 'r') as f:
+            loaded_params = json.load(f)
+
+        common_keys = set.intersection(
+            set(loaded_params.keys()), set(dumpable_params.keys()))
+        assert all(loaded_params[k] == dumpable_params[k] for k in common_keys)
         logger.warn('Loading policy from path ' + best_policy_path)
         with open(best_policy_path, 'rb') as f:
-            with tf.variable_scope("backup") as vs:
-                policy_backup = pickle.load(f)
-        init_main_net_op = list(
-            map(lambda v: v[0].assign(v[1]), zip(policy.main_vars,
-                                                 policy_backup.main_vars)))
-        policy.sess.run(init_main_net_op)
-        policy._sync_optimizers()
-        policy._init_target_net()
-        assert params['env_name'] == policy.info['env_name']
+            policy = pickle.load(f)
+
+        policy.set_params_after_load(
+            **config.get_ddpg_params(
+                dims=dims, params=params, clip_return=clip_return))
+    else:
+        policy = config.configure_ddpg(
+            dims=dims, params=params, clip_return=clip_return)
+        with open(os.path.join(logger.get_dir(), 'params.json'), 'w') as f:
+            json.dump(dumpable_params, f)
 
     rollout_params = {
         'exploit': False,

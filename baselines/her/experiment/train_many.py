@@ -60,4 +60,10 @@ train_many_vars = partial(
     replay_strategy = Variations(["future"]))
 
 
+train_her_fwrl_path_reward = partial(
+    train_many,
+    env = Variations(["FetchReachPR-v1", "FetchReach-v1"]),
+    loss_term = Variations(["fwrl", "ddpg"]))
+
+
 main = partial(train_many_vars, num_cpu = 6)

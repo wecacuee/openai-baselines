@@ -282,12 +282,10 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
         if key.startswith('info_'):
             info[key.replace('info_', '')] = value
 
-
     if reward_type == PathRewardEnv.SPARSE_PATH:
         # No need to recompute rewards because they are independent of the
         # goal location
-        # transitions['r'] = transitions['r']
-        pass
+        transitions['r'] = episode_batch['r'][episode_idxs, t_samples]
     else:
         # Re-compute reward since we may have substituted the goal.
         reward_params = {k: transitions[k] for k in ['ag_2', 'g']}

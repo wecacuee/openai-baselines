@@ -160,6 +160,7 @@ class DDPG(object):
                          for key, val in input_shapes.items()}
         buffer_shapes['g'] = (buffer_shapes['g'][0], self.dimg)
         buffer_shapes['ag'] = (self.T+1, self.dimg)
+        buffer_shapes['r'] = (self.T,)
 
         buffer_size = (self.buffer_size // self.rollout_batch_size) * self.rollout_batch_size
         self.buffer = ReplayBuffer(buffer_shapes, buffer_size, self.T, self.sample_transitions)
@@ -445,3 +446,6 @@ class DDPG(object):
         assert(len(vars) == len(state["tf"]))
         node = [tf.assign(var, val) for var, val in zip(vars, state["tf"])]
         self.sess.run(node)
+
+    def set_params_after_load(self, **kwargs):
+        self.__dict__.update(kwargs)

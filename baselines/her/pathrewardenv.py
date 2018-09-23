@@ -25,6 +25,9 @@ class PathRewardEnv(Wrapper):
         else:
             return -d
 
+    def __getattr__(self, attr):
+        return getattr(self.env, attr)
+
 
 def apply_wrapper(wrapper, env):
     @wraps(env)
@@ -56,15 +59,35 @@ def new_name_and_entry_point(old_env_name,
         PathRewardEnv, getattr(gym.envs.robotics, gym_name))
 
 
-for old_env_name in ("""FetchPush-v1 FetchReach-v1 FetchSlide-v1
+def register_wrapped_envs(wrap_envs=("""FetchPush-v1 FetchReach-v1 FetchSlide-v1
                      FetchPickAndPlace-v1
                      HandReach-v0 HandManipulateBlock-v0 HandManipulateEgg-v0
-                     HandManipulatePen-v0""").split():
-    new_class_name, new_name, class_ = new_name_and_entry_point(old_env_name)
-    # Add the class as an entry point
-    setattr(sys.modules[__name__], new_class_name, class_)
-    # Register the entry point with gym
-    gym.envs.registration.register(
-        id=new_name,
-        entry_point=".".join((__package__, new_class_name)),
-        kwargs=dict(reward_type=PathRewardEnv.SPARSE_PATH))
+                     HandManipulatePen-v0""").split()):
+    for old_env_name in wrap_envs:
+        new_class_name, new_name, class_ = new_name_and_entry_point(old_env_name)
+        # Add the class as an entry point
+        setattr(sys.modules[__name__], new_class_name, class_)
+        # Register the entry point with gym
+        gym.envs.registration.register(
+            id=new_name,
+            entry_point=":".join((__name__, new_class_name)),
+            max_episode_steps=50,
+            kwargs=dict(reward_type=PathRewardEnv.SPARSE_PATH))
+
+register_wrapped_envs()
+
+
+def is_wrapper_instance(obj, wrapper_class):
+    """
+    >>> env = gym.make("FetchReachPR-v1")
+    >>> is_wrapper_instance(env, PathRewardEnv)
+    True
+    >>> env = gym.make("FetchReach-v1")
+    >>> is_wrapper_instance(env, PathRewardEnv)
+    False
+    >>> is_wrapper_instance(env, gym.wrappers.TimeLimit)
+    True
+    """
+    return (isinstance(obj, wrapper_class) or
+            (isinstance(obj, Wrapper) and
+             is_wrapper_instance(obj.env, wrapper_class)))
