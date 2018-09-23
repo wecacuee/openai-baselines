@@ -50,9 +50,9 @@ train_many_vars = partial(
     env = Variations([
         # "FetchReach-v1",
         # "FetchPush-v1",
-        "FetchSlide-v1",
-        "FetchPickAndPlace-v1",
-        "HandReach-v0",
+        # "FetchSlide-v1",
+        # "FetchPickAndPlace-v1",
+        # "HandReach-v0",
         "HandManipulateBlock-v0",
         "HandManipulatePen-v0",
         "HandManipulateEgg-v0",
