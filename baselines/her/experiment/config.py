@@ -1,5 +1,6 @@
 from functools import partial, wraps
 import os
+import json
 import subprocess
 from pathlib import Path
 from collections import Callable
@@ -121,6 +122,8 @@ def cached_make_env(make_env):
 def preprocess_params(params):
     for k, v in params.items():
         params[k] = v(**params) if isinstance(v, Callable) else v
+        if k.endswith("_json"):
+            params[k] = json.loads(v)
     return params
 
 
@@ -194,10 +197,10 @@ def simple_goal_subtract(a, b):
     return a - b
 
 
-available_loss_terms = dict(ddpg=qlearning_loss_term,
-                            dqst=qlearning_step_loss_term_fwrl,
-                            fwrl=qlearning_constrained_loss_term_fwrl,
-                            qlst=qlearning_step_constrained_loss_term_fwrl,
+available_loss_terms = dict(ddpg=qlearning_loss_term, # 1 term
+                            dqst=qlearning_step_loss_term_fwrl, # 2 terms
+                            fwrl=qlearning_constrained_loss_term_fwrl, # 3 terms
+                            qlst=qlearning_step_constrained_loss_term_fwrl, # 4 terms
                             # Useless below. Do not work even with HER sampling
                             # Experiment 38f4625
                             qste=qlearning_step_tri_eq_loss_term_fwrl,

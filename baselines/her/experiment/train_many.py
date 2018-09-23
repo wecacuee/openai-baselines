@@ -3,6 +3,7 @@ from functools import partial
 from subprocess import check_call
 from pathlib import Path
 import sys
+import json
 
 from .config import DEFAULT_PARAMS
 from ..results_plotter import plot_results
@@ -65,5 +66,11 @@ train_her_fwrl_path_reward = partial(
     env = Variations(["FetchReachPR-v1", "FetchReach-v1"]),
     loss_term = Variations(["fwrl", "ddpg"]))
 
+train_loss_term_weights = partial(
+    train_many,
+    env = "FetchReach-v1",
+    loss_term = "fwrl",
+    loss_term_weights_json = Variations(
+        [json.dumps([i/5, (5-i)/10, (5-i)/10]) for i in range(1,5)]))
 
 main = partial(train_many_vars, num_cpu = 6)

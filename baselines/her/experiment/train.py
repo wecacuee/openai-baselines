@@ -220,6 +220,9 @@ def launch(
               default='fwrl', help='what additional loss term to include')
 @click.option('--gitrev', type=str, default=config.this_file_git_rev_fn,
               help='Git revision for naming the log directory')
+@click.option('--loss_term_weights_json',
+              type=str, default='[]',
+              help='Weights for different components of the loss term')
 def main(**kwargs):
     return launch(**kwargs)
 

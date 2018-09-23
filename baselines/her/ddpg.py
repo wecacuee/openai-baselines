@@ -37,7 +37,7 @@ def qlearning_loss_term(batch_tf: Mapping[str, tf.Tensor],
                         main_net_fn: Callable,
                         post_process_target_ret: Callable=lambda x: x,
                         gamma=None,
-                        return_main_target=True):
+                        loss_term_weights=None):
     # networks
     main = main_net_fn(inputs=batch_tf)
     # NOTE: What is o_2 and g_2. Why replace inputs for target network?
@@ -100,6 +100,7 @@ class DDPG(object):
                  rollout_batch_size, subtract_goals, relative_goals, clip_pos_returns, clip_return,
                  sample_transitions, gamma, reuse=False,
                  loss_term=qlearning_loss_term,
+                 loss_term_weights=None,
                  **kwargs):
         """Implementation of DDPG that is used in combination with Hindsight Experience Replay (HER).
 
@@ -362,7 +363,8 @@ class DDPG(object):
                 tf.clip_by_value,
                 clip_value_min=-self.clip_return,
                 clip_value_max=(0. if self.clip_pos_returns else np.inf)),
-            gamma = self.gamma)
+            gamma = self.gamma,
+            loss_term_weights=self.loss_term_weights)
 
         # NOTE: Why are there separate objective functions for pi and Q?
         # Because the pi loss term makes sure that only pi parameters are in
