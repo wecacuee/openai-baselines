@@ -1,4 +1,6 @@
 from functools import partial, wraps
+import hashlib
+import types
 import os
 import json
 import subprocess
@@ -49,6 +51,21 @@ this_file_git_rev_fn = ignore_extrakw(
             Path(__file__).absolute().parent))
 
 
+class IgnoreFunc(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (float, int, str, bytes, list, dict, tuple)):
+            # Let the base class default method raise the TypeError
+            return json.JSONEncoder.default(self, obj)
+        else:
+            return ''
+
+
+def hashkwargs(l=8, **kwargs):
+    return hashlib.md5(
+        json.dumps(kwargs, cls=IgnoreFunc).encode('utf-8')
+    ).hexdigest()[:l]
+
+
 DEFAULT_ENV_PARAMS = {
     'FetchReach-v1': {
         'n_cycles': 10,
@@ -93,8 +110,9 @@ DEFAULT_PARAMS = {
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
     'gitrev': this_file_git_rev_fn,
     'env' : "FetchReach-v1",
+    'hash_params' : hashkwargs,
     'env_name' : "FetchReach-v1",
-    'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{loss_term}-{replay_strategy}".format,
+    'logdir': "{mid_dir}/{project_name}/{gitrev}-{hash_params}-{env_name}-{loss_term}-{replay_strategy}".format,
     'n_epochs': 30,
     'seed': 0,
     'replay_strategy': 'future',
@@ -120,10 +138,13 @@ def cached_make_env(make_env):
 
 
 def preprocess_params(params):
+    new_kw = {}
     for k, v in params.items():
         params[k] = v(**params) if isinstance(v, Callable) else v
         if k.endswith("_json"):
-            params[k] = json.loads(v)
+            new_kw[k[:-len("_json")]] = json.loads(v)
+
+    params.update(new_kw)
     return params
 
 

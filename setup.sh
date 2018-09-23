@@ -24,7 +24,7 @@ if [[ "$PATH" != *"$PIPDIR/bin"* ]]; then
     export PATH=$PIPDIR/bin:$PATH
 fi
 . ${THISDIR}/setup-mujoco.sh
-#if [[ "$PYTHONPATH" != *"$THISDIR"* ]]; then
-#    export PYTHONPATH=$THISDIR:$PYTHONPATH
-#fi
-PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
+if [[ "$PYTHONPATH" != *"$THISDIR"* ]]; then
+    export PYTHONPATH=$THISDIR:$PYTHONPATH
+fi
+#PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR

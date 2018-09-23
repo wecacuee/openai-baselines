@@ -68,7 +68,7 @@ train_her_fwrl_path_reward = partial(
 
 train_loss_term_weights = partial(
     train_many,
-    env = "FetchReach-v1",
+    env = "FetchSlide-v1",
     loss_term = "fwrl",
     loss_term_weights_json = Variations(
         [json.dumps([i/5, (5-i)/10, (5-i)/10]) for i in range(1,5)]))

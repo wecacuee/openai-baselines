@@ -1,6 +1,5 @@
 from typing import Mapping, Callable
 from functools import partial
-from itertools import repeat
 import tensorflow as tf
 import numpy as np
 
@@ -153,11 +152,11 @@ def sum_loss_terms(batch_tf: Mapping[str, tf.Tensor],
                    loss_terms_fns = [],
                    loss_term_weights = [],
                    **kwargs):
-    if not len(loss_term_weights):
-        loss_term_weights = repeat(1, len(loss_terms_fns))
+    if not loss_term_weights:
+        loss_term_weights = [1.0] * len(loss_terms_fns)
     total_weight = sum(loss_term_weights)
-    return sum(w * f(batch_tf, target_net_fn, main_net_fn, **kwargs)
-               for f, w in zip(loss_terms_fns, loss_term_weights)) / total_weight
+    return sum(w / total_weight * f(batch_tf, target_net_fn, main_net_fn, **kwargs)
+               for f, w in zip(loss_terms_fns, loss_term_weights))
 
 
 bounds_loss_term_fwrl = partial(
