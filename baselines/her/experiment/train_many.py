@@ -67,6 +67,7 @@ train_many_vars = partial(
 train_her_fwrl_path_reward = partial(
     train_many,
     exp_name = 'her_fwrl_path_reward',
+    n_epochs = 20,
     env = Variations(["FetchReachPR-v1", "FetchReach-v1"]),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
@@ -74,6 +75,7 @@ train_her_fwrl_path_reward = partial(
 train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',
+    n_epochs = 20,
     env = "FetchPush-v1",
     loss_term = "qlst",
     loss_term_weights_json = Variations(
@@ -87,6 +89,7 @@ train_loss_term_weights = partial(
 train_intmdt_sampling = partial(
     train_many,
     exp_name = 'intmdt_sampling',
+    n_epochs = 20,
     env = "FetchPush-v1",
     loss_term = "fwrl",
     intermediate_sampling = Variations([

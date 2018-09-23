@@ -137,9 +137,9 @@ DEFAULT_PARAMS = {
     'replay_strategy': 'future',
     'policy_save_interval': 5,
     'clip_return': True,
-    'reward_type': '',
     'intermediate_sampling': 'uniform', # {uniform|middle}'
     'exp_name': '',
+    'recompute_rewards': True,
 }
 
 
@@ -217,9 +217,9 @@ def get_her_params(params):
         'reward_fun': reward_fun,
     }
     if is_wrapper_instance(env, PathRewardEnv):
-        params['reward_type'] = PathRewardEnv.SPARSE_PATH
+        params['recompute_rewards'] = False
 
-    for name in ['replay_strategy', 'replay_k', 'reward_type']:
+    for name in ['replay_strategy', 'replay_k', 'recompute_rewards']:
         her_params[name] = params[name]
         params['_' + name] = her_params[name]
         del params[name]

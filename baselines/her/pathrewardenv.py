@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from functools import wraps
+from functools import wraps, partial
 
 import gym
 import gym.envs.robotics
@@ -14,6 +14,11 @@ def goal_distance(goal_a, goal_b):
 
 class PathRewardEnv(Wrapper):
     SPARSE_PATH = 'sparse-path'
+    CONT_STEP_LENGTH = 'cont-step-length'
+
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self.prev_achieved_goal = None
 
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
@@ -22,8 +27,21 @@ class PathRewardEnv(Wrapper):
             return -(d > self.distance_threshold).astype(np.float32)
         elif self.reward_type == self.SPARSE_PATH:
             return -np.array(1, dtype=np.float32)
+        elif self.reward_type == self.CONT_STEP_LENGTH:
+            d_ag_pag = goal_distance(self.prev_achieved_goal, achieved_goal)
+            return -d_ag_pag
         else:
             return -d
+
+    def reset(self, **kwargs):
+        obs = self.env.reset(**kwargs)
+        self.prev_achieved_goal = obs['achieved_goal']
+        return obs
+
+    def step(self, act):
+        obs, rew, done, info = self.env.step(act)
+        self.prev_achieved_goal = obs['achieved_goal']
+        return obs, rew, done, info
 
     def __getattr__(self, attr):
         return getattr(self.env, attr)
@@ -62,19 +80,27 @@ def new_name_and_entry_point(old_env_name,
 def register_wrapped_envs(wrap_envs=("""FetchPush-v1 FetchReach-v1 FetchSlide-v1
                      FetchPickAndPlace-v1
                      HandReach-v0 HandManipulateBlock-v0 HandManipulateEgg-v0
-                     HandManipulatePen-v0""").split()):
+                     HandManipulatePen-v0""").split(),
+                          wrap_old_env=new_name_and_entry_point,
+                          max_episode_steps=50,
+                          kwargs=dict(reward_type=PathRewardEnv.SPARSE_PATH)):
     for old_env_name in wrap_envs:
-        new_class_name, new_name, class_ = new_name_and_entry_point(old_env_name)
+        new_class_name, new_name, class_ = wrap_old_env(old_env_name)
         # Add the class as an entry point
         setattr(sys.modules[__name__], new_class_name, class_)
         # Register the entry point with gym
         gym.envs.registration.register(
             id=new_name,
             entry_point=":".join((__name__, new_class_name)),
-            max_episode_steps=50,
-            kwargs=dict(reward_type=PathRewardEnv.SPARSE_PATH))
+            max_episode_steps=max_episode_steps,
+            kwargs=kwargs)
 
 register_wrapped_envs()
+register_wrapped_envs(
+    wrap_old_env = partial(new_name_and_entry_point,
+                           class_name_fn='{env_name}EnvCSL'.format,
+                           name_fn = '{env_name}CSL-{version}'.format),
+    kwargs=dict(reward_type=PathRewardEnv.CONT_STEP_LENGTH))
 
 
 def is_wrapper_instance(obj, wrapper_class):

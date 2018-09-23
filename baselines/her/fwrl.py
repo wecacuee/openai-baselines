@@ -256,7 +256,7 @@ def compute_middle(t_samples, future_all_t):
 
 
 def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
-                             future_p=None, reward_fun=None, reward_type=None,
+                             future_p=None, reward_fun=None, recompute_rewards=True,
                              intermediate_sampling=sample_uniform):
     """episode_batch is {key: array(buffer_size x T x dim_key)}
     """
@@ -300,7 +300,7 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
         if key.startswith('info_'):
             info[key.replace('info_', '')] = value
 
-    if reward_type == PathRewardEnv.SPARSE_PATH:
+    if recompute_rewards:
         # No need to recompute rewards because they are independent of the
         # goal location
         transitions['r'] = episode_batch['r'][episode_idxs, t_samples]
@@ -318,7 +318,7 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
     return transitions
 
 
-def make_sample_fwrl_transitions(replay_strategy, replay_k, reward_fun, reward_type):
+def make_sample_fwrl_transitions(replay_strategy, replay_k, **kwargs):
     """Creates a sample function that can be used for FWRL experience replay.
     It samples intermediate states as part of experience.
 
@@ -339,5 +339,4 @@ def make_sample_fwrl_transitions(replay_strategy, replay_k, reward_fun, reward_t
     else:  # 'replay_strategy' == 'none'
         future_p = 0
 
-    return partial(_sample_fwrl_transitions, future_p = future_p,
-                   reward_fun=reward_fun, reward_type=reward_type)
+    return partial(_sample_fwrl_transitions, future_p = future_p, **kwargs)
