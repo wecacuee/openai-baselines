@@ -7,6 +7,19 @@ else
     THISDIR=$(dirname $(readlink -m $THISFILE))
 fi
 
+# Prepend a path to environment variable only once
+prependonce() {
+    envname="$1";
+    ppath="${2}";
+    if [ ! -d "$ppath" ]; then
+        echo "No such directory $ppath"
+        return
+    fi
+    if [[ ":${!envname}:" != "*:$ppath:*" ]]; then
+        eval ${envname}="${ppath}:${!envname}"
+    fi
+}
+
 if [ -f /etc/profile.d/modules.sh ]; then
     . /etc/profile.d/modules.sh
     module use /z/home/dhiman/wrk/common/modulefiles/
@@ -17,14 +30,10 @@ export MID_DIR=/z/home/dhiman/mid/
 PIPDIR=$MID_DIR/$PROJECT_NAME/build
 mkdir -p $PIPDIR
 PYPATH=$PIPDIR/lib/python3.6/site-packages/
-if [[ "$PYTHONPATH" != *"$PYPATH"* ]]; then
-    export PYTHONPATH=$PYPATH:$PYTHONPATH
-fi
-if [[ "$PATH" != *"$PIPDIR/bin"* ]]; then
-    export PATH=$PIPDIR/bin:$PATH
-fi
+prependonce PYTHONPATH $PYPATH
+prependonce PATH $PIPDIR/bin
 . ${THISDIR}/setup-mujoco.sh
-if [[ "$PYTHONPATH" != *"$THISDIR"* ]]; then
-    export PYTHONPATH=$THISDIR:$PYTHONPATH
-fi
-#PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
+#if [[ "$PYTHONPATH" != *"$THISDIR"* ]]; then
+#    export PYTHONPATH=$THISDIR:$PYTHONPATH
+#fi
+PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
