@@ -27,24 +27,16 @@ if [ -f /etc/profile.d/modules.sh ]; then
 fi
 
 export MID_DIR=/z/home/dhiman/mid/
-PIPDIR=$MID_DIR/$PROJECT_NAME/build
+#PIPDIR=$MID_DIR/$PROJECT_NAME/build
+PIPDIR=$THISDIR/build
 mkdir -p $PIPDIR
 PYPATH=$PIPDIR/lib/python3.6/site-packages/
 prependonce PYTHONPATH "$PYPATH"
 prependonce PATH "$PIPDIR/bin"
 . ${THISDIR}/setup-mujoco.sh
 
-if [[ ! -d "$PYPATH" ]]; then
-    PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
-fi
-
-
 if [[ "$1" == "ENV" ]]; then
     prependonce PYTHONPATH "$THISDIR"
 else
-    PIPDIRVERSIONED=$THISDIR/build
-    mkdir -p $PIPDIRVERSIONED
-    prependonce PYTHONPATH "$PIPDIRVERSIONED/lib/python3.6/site-packages/"
-    prependonce PATH "$PIPDIRVERSIONED/bin"
-    PYTHONUSERBASE=$PIPDIRVERSIONED pip install --user --upgrade -e $THISDIR
+    PYTHONUSERBASE=$PIPDIR pip install --user --upgrade -e $THISDIR
 fi
