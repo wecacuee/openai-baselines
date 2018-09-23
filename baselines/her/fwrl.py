@@ -300,7 +300,7 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
         if key.startswith('info_'):
             info[key.replace('info_', '')] = value
 
-    if recompute_rewards:
+    if not recompute_rewards:
         # No need to recompute rewards because they are independent of the
         # goal location
         transitions['r'] = episode_batch['r'][episode_idxs, t_samples]
