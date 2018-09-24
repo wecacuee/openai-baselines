@@ -39,14 +39,14 @@ def run_one_experiment(confname, var_conf, common_kwargs):
     call_train(**var_conf)
 
 
-def experiment_configurations(kwargs):
+def experiment_configurations(**kwargs):
     variations, common_kwargs = separate_variations(kwargs)
     return config_vars_to_configs(variations), common_kwargs
 
 
 def train_many(**kwargs):
     logdirs = []
-    var_configs, common_kwargs = experiment_configurations(kwargs)
+    var_configs, common_kwargs = experiment_configurations(**kwargs)
     for confname, conf in var_configs.items():
         run_one_experiment(confname, conf, common_kwargs)
         logdirs.append(
