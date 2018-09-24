@@ -107,7 +107,7 @@ exp_conf_path_reward = partial(
         "HandManipulateEggSparse-v0",
         "HandManipulateEggPR-v0"],
     ),
-    loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
+    loss_term = Variations(["dqst", "fwrl", "ddpg"]))
 
 
 train_loss_term_weights = partial(
