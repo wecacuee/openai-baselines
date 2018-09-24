@@ -30,7 +30,7 @@ class PathRewardEnv(Wrapper):
             return -np.array(1, dtype=np.float32)
         elif self.reward_type == self.CONT_STEP_LENGTH:
             d_ag_pag = goal_distance(self.achieved_goal_past_two[0], achieved_goal)
-            return -d_ag_pag
+            return -d_ag_pag * 100
         else:
             return self.env.compute_reward(achieved_goal, goal, info)
 
