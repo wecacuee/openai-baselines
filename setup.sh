@@ -31,7 +31,9 @@ export MID_DIR=/z/home/dhiman/mid/
 PIPDIR=$THISDIR/build
 mkdir -p $PIPDIR
 PYPATH=$PIPDIR/lib/python3.6/site-packages/
+mkdir -p "$PYPATH"
 prependonce PYTHONPATH "$PYPATH"
+mkdir -p "$PYPATH/bin"
 prependonce PATH "$PIPDIR/bin"
 . ${THISDIR}/setup-mujoco.sh
 
