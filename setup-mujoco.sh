@@ -1,8 +1,6 @@
 MJPATH=$HOME/.mujoco/mjpro150/bin
 prependonce LD_LIBRARY_PATH $MJPATH
-prependonce LD_LIBRARY_PATH /usr/lib/nvidia-384/
-prependonce LD_LIBRARY_PATH /usr/lib/nvidia-390/
-prependonce LD_LIBRARY_PATH /usr/lib/nvidia-396/
+prependonce LD_LIBRARY_PATH $(ls -d /usr/lib/nvidia-3??/ | sort -r)
 if [[ ! -f "/usr/bin/patchelf" ]]; then
     sudo apt install patchelf
 fi
