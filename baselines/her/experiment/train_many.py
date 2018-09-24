@@ -33,18 +33,38 @@ def call_train(**conf):
     return check_call(cmd)
 
 
+def run_one_experiment(confname, var_conf, common_kwargs):
+    var_conf.update(common_kwargs)
+    var_conf['exp_name'] = "-".join((var_conf.get('exp_name', ''), confname))
+    call_train(**var_conf)
+
+
+def experiment_configurations(kwargs):
+    variations, common_kwargs = separate_variations(kwargs)
+    return config_vars_to_configs(variations), common_kwargs
+
+
 def train_many(**kwargs):
     logdirs = []
-    variations, kwargs = separate_variations(kwargs)
-    for confname, conf in config_vars_to_configs(variations).items():
-        conf.update(kwargs)
-        conf['exp_name'] = "-".join((conf.get('exp_name', ''), confname))
-        call_train(**conf)
+    var_configs, common_kwargs = experiment_configurations(kwargs)
+    for confname, conf in var_configs.items():
+        run_one_experiment(confname, conf, common_kwargs)
         logdirs.append(
             DEFAULT_PARAMS['logdir'](**dict(DEFAULT_PARAMS, **conf)))
     print(logdirs)
     plot_results(logdirs)
 
+def environ_list():
+    return [
+        # "FetchReachSparse-v1",
+        # "FetchPushSparse-v1",
+        # "FetchSlideSparse-v1",
+        "FetchPickAndPlaceSparse-v1",
+        "HandReachSparse-v0",
+        "HandManipulateBlockSparse-v0",
+        "HandManipulatePenSparse-v0",
+        "HandManipulateEggSparse-v0",
+        ]
 
 train_many_vars = partial(
     train_many,
@@ -68,6 +88,25 @@ train_her_fwrl_path_reward = partial(
     exp_name = 'path_reward',
     n_epochs = 60,
     env = Variations(["FetchSlidePR-v1", "FetchSlideSparse-v1"]),
+    loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
+
+
+exp_conf_path_reward = partial(
+    experiment_configurations,
+    exp_name = 'path_reward',
+    n_epochs = 60,
+    env = Variations([
+        "FetchPickAndPlaceSparse-v1",
+        "FetchPickAndPlacePR-v1",
+        "HandReachSparse-v0",
+        "HandReachPR-v0",
+        "HandManipulateBlockSparse-v0",
+        "HandManipulateBlockPR-v0",
+        "HandManipulatePenSparse-v0",
+        "HandManipulatePenPR-v0",
+        "HandManipulateEggSparse-v0",
+        "HandManipulateEggPR-v0"],
+    ),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
 
