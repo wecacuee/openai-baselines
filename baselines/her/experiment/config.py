@@ -216,8 +216,11 @@ def get_her_params(params):
     her_params = {
         'reward_fun': reward_fun,
     }
-    if is_wrapper_instance(env, PathRewardEnv):
+    if (is_wrapper_instance(env, PathRewardEnv)
+        and env.unwrapped.reward_type in PathRewardEnv.MY_REWARD_TYPES):
         params['recompute_rewards'] = False
+    else:
+        params['recompute_rewards'] = True
 
     for name in ['replay_strategy', 'replay_k', 'recompute_rewards']:
         her_params[name] = params[name]
