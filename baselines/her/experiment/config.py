@@ -131,7 +131,7 @@ DEFAULT_PARAMS = {
     'env' : "FetchReach-v1",
     'hash_params' : hashkwargs,
     'env_name' : "FetchReach-v1",
-    'logdir': "{mid_dir}/{project_name}/{gitrev}-{env_name}-{loss_term}-{replay_strategy}-{exp_name}".format,
+    'logdir': "{mid_dir}/{project_name}/{gitrev}-{exp_name}".format,
     'n_epochs': 30,
     'seed': 0,
     'replay_strategy': 'future',
