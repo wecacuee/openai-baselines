@@ -9,7 +9,7 @@
 #
 # #PBS -q fluxg              # Not required for blindspot but for flux
 # #PBS -A jjcorso_fluxg      # Not required for blindspot but for flux
-#PBS -t 1-10
+#PBS -t 0-39
 
 echo "starting pbs script"
 VERSION=0.1.0
