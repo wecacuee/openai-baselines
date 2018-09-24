@@ -66,8 +66,8 @@ train_many_vars = partial(
 train_her_fwrl_path_reward = partial(
     train_many,
     exp_name = 'her_fwrl_path_reward',
-    n_epochs = 20,
-    env = Variations(["FetchSlideCSL-v1", "FetchSlidePR-v1", "FetchSlide-v1"]),
+    n_epochs = 30,
+    env = Variations(["FetchPushCSL-v1", "FetchPushPR-v1", "FetchPush-v1"]),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
 
