@@ -1,4 +1,4 @@
-if __package__ is None:
+if not __package__ or __package__ == '__main__':
     __package__ = "baselines.her"
 
 from functools import partial, reduce, wraps
@@ -11,6 +11,8 @@ from pathlib import Path
 from glob import glob
 import json
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from ..results_plotter import COLORS
@@ -65,11 +67,11 @@ def common_substr(strs, return_diffs=False):
     return (comm, diffs) if return_diffs else comm
 
 
-def diff_substr(strs, s, splitre="[-_/]", joinstr="-"):
+def diff_substr(strs, splitre="[-_/]", joinstr="-"):
     import re
     _, diffs = common_substr((re.split(splitre, s) for s in strs),
                              return_diffs=True)
-    return joinstr.join(diffs[strs.index(s)])
+    return map(joinstr.join, diffs)
 
 
 def mm2inches(mm):
@@ -79,6 +81,7 @@ def mm2inches(mm):
 def default_figsize(
         A4WIDTH = mm2inches(210)):
     return (A4WIDTH / 2, A4WIDTH / 2 / 1.618)
+
 
 def jsonloadd(d, paramsjson='params.json'):
     with open(os.path.join(d, paramsjson)) as f:
@@ -101,7 +104,7 @@ def dict_diffs(params, ignore_keys):
 
 
 def params_diffs(dirs, jsonloader=jsonloadd,
-                 ignore_keys=set(['env_name', 'logdir', 'hash_params'])):
+                 ignore_keys=set(['env_name', 'exp_name', 'logdir', 'hash_params'])):
     assert len(dirs) >= 2
     params = list(map(jsonloader, dirs))
     diffs_kv = dict_diffs(params, ignore_keys=ignore_keys)
@@ -123,7 +126,7 @@ def plot_results(
         figsize = default_figsize):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
-    dir_diffs = params_diffs(dirs)
+    dir_diffs = list(diff_substr(params_diffs(dirs)))
     data = {d: progress_load_results(filenames)
             for d, filenames in zip(dirs, f_per_dirs)
             if len(filenames)}
@@ -138,16 +141,12 @@ def plot_results(
         ax.set_xlabel(translations.get(xdatakey, xdatakey))
         ax.set_ylabel(translations.get(metric, metric))
         #ax.set_title(translations.get(metric, metric))
-        ax.legend()
+        ax.legend(prop=dict(size=6))
         for d in data.keys():
             path = Path(osp.join(d, metric + ".pdf"))
             path.parent.mkdir(parents=True, exist_ok=True)
             print("Saving plot to {}".format(path))
             fig.savefig(str(path))
-
-        if os.environ.get("DISPLAY") == ":0":
-            pass
-            #plt.show()
 
 
 def plot_results_grouped(rootdir, dir_patterns, **kw):

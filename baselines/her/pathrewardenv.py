@@ -25,9 +25,9 @@ class PathRewardEnv(Wrapper):
 
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
-        self.reward_compute_count += 1
+        self.reward_compute_count += goal.shape[0] if goal.ndim >= 2 else 1
         if self.reward_type == self.SPARSE_PATH:
-            return -np.array(1, dtype=np.float32)
+            return -np.ones((goal.shape[0],), dtype=np.float32)
         elif self.reward_type == self.CONT_STEP_LENGTH:
             d_ag_pag = goal_distance(self.achieved_goal_past_two[0], achieved_goal)
             return -d_ag_pag * 100
