@@ -194,6 +194,13 @@ plot_results_path_rewards = partial(
                            "FetchReachPR-v1-fwrl": "PR-fwrl",
                            "FetchReachPR-v1-dqst": "PR-dqst"}))
 
+plot_results_intmdt_sampling = partial(
+    plot_results,
+    dirs = ["/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/d249d2d-c9bfa98b-FetchPush-v1-fwrl-future", "/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/245b3c4-e5f0dd20-FetchPush-v1-fwrl-future-"],
+    translations = merged(getdefarg(plot_results, 'translations'),
+                          {"d249d2d-middle": "middle",
+                           "245b3c4-uniform": "uniform"}))
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
