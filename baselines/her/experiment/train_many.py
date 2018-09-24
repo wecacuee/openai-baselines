@@ -50,14 +50,14 @@ train_many_vars = partial(
     train_many,
     exp_name = 'many_envs',
     env = Variations([
-        # "FetchReach-v1",
-        # "FetchPush-v1",
-        # "FetchSlide-v1",
-        # "FetchPickAndPlace-v1",
-        # "HandReach-v0",
-        "HandManipulateBlock-v0",
-        "HandManipulatePen-v0",
-        "HandManipulateEgg-v0",
+        # "FetchReachSparse-v1",
+        # "FetchPushSparse-v1",
+        # "FetchSlideSparse-v1",
+        # "FetchPickAndPlaceSparse-v1",
+        # "HandReachSparse-v0",
+        "HandManipulateBlockSparse-v0",
+        "HandManipulatePenSparse-v0",
+        "HandManipulateEggSparse-v0",
         ]),
     loss_term = Variations(["fwrl", "ddpg", "dqst", "qlst"]),
     replay_strategy = Variations(["future"]))
@@ -67,7 +67,7 @@ train_her_fwrl_path_reward = partial(
     train_many,
     exp_name = 'her_fwrl_path_reward',
     n_epochs = 30,
-    env = Variations(["FetchPushCSL-v1", "FetchPushPR-v1", "FetchPush-v1"]),
+    env = Variations(["FetchPushCSL-v1", "FetchPushPR-v1", "FetchPushSparse-v1"]),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
 
@@ -75,7 +75,7 @@ train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',
     n_epochs = 20,
-    env = "FetchPush-v1",
+    env = "FetchPushSparse-v1",
     loss_term = "qlst",
     loss_term_weights_json = Variations(
         [json.dumps([i/max(1,i+j),
@@ -89,7 +89,7 @@ train_intmdt_sampling = partial(
     train_many,
     exp_name = 'intmdt_sampling',
     n_epochs = 20,
-    env = "FetchPush-v1",
+    env = "FetchPushSparse-v1",
     loss_term = "fwrl",
     intermediate_sampling = Variations([
         'middle', 'uniform']))

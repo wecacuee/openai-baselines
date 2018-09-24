@@ -69,14 +69,14 @@ def hashkwargs(l=8, **kwargs):
 
 
 DEFAULT_ENV_PARAMS = {
-    'FetchReach-v1': {
+    'FetchReachSparse-v1': {
         'n_cycles': 10,
         'n_epochs': 10,
     },
-    'FetchPush-v1': {
+    'FetchPushSparse-v1': {
         'n_epochs': 20
     },
-    'FetchSlide-v1': {
+    'FetchSlideSparse-v1': {
         'n_epochs': 200
     },
     'FetchReachPR-v1': {
@@ -128,9 +128,9 @@ DEFAULT_PARAMS = {
     'mid_dir': '/z/home/{user}/mid'.format,
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
     'gitrev': this_file_git_rev_fn,
-    'env' : "FetchReach-v1",
+    'env' : "FetchReachSparse-v1",
     'hash_params' : hashkwargs,
-    'env_name' : "FetchReach-v1",
+    'env_name' : "FetchReachSparse-v1",
     'logdir': "{mid_dir}/{project_name}/{gitrev}-{exp_name}".format,
     'n_epochs': 30,
     'seed': 0,

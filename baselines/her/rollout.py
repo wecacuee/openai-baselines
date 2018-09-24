@@ -41,6 +41,7 @@ class RolloutWorker:
         self.ag_g_dist_history = deque(maxlen=history_len)
 
         self.n_episodes = 0
+        self.reward_compute_count = 0
         self.g = np.empty((self.rollout_batch_size, self.dims['g']), np.float32)  # goals
         self.initial_o = np.empty((self.rollout_batch_size, self.dims['o']), np.float32)  # observations
         self.initial_ag = np.empty((self.rollout_batch_size, self.dims['g']), np.float32)  # achieved goals
@@ -139,6 +140,7 @@ class RolloutWorker:
             rewards.append(rew.copy())
             o[...] = o_new
             ag[...] = ag_new
+
         obs.append(o.copy())
         achieved_goals.append(ag.copy())
         self.initial_o[:] = o
@@ -163,6 +165,10 @@ class RolloutWorker:
             self.Q_history.append(np.mean(Qs))
             self.ag_g_dist_history.append(np.mean(ag_g_dists))
         self.n_episodes += self.rollout_batch_size
+        reward_compute_count_idx = self.info_keys.index('reward_compute_count')
+        self.reward_compute_count = np.sum(
+            info_values[reward_compute_count_idx][self.T-1, :])
+
 
         # NOTE: Dimensions are swapped here:
         # The dimensions of obs are ith environment (Batch), time step and
@@ -197,6 +203,7 @@ class RolloutWorker:
             logs += [('mean_Q', np.mean(self.Q_history))]
             logs += [('ag_g_dist', np.mean(self.ag_g_dist_history))]
         logs += [('episode', self.n_episodes)]
+        logs += [('reward_compute_count', self.reward_compute_count)]
 
         if prefix is not '' and not prefix.endswith('/'):
             return [(prefix + '/' + key, val) for key, val in logs]
