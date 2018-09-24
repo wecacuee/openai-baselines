@@ -1,7 +1,7 @@
 #PBS -N fwrl-her-train-path-rewards  # Any name to identify your job
 #PBS -j oe                   # Join error and output files for convinience
 #PBS -l walltime=1000:00:00     # Keep walltime big enough to finish the job
-#PBS -l nodes=eyeball+retinene:ppn=6:gpus=1 # nodes requested: Processor per node: gpus requested
+#PBS -l nodes=eyeball+retinene+macula:ppn=1:gpus=1 # nodes requested: Processor per node: gpus requested
 #PBS -S /bin/bash            # Shell to use
 #PBS -m a                  # Mail to <user>@umich.edu on abort, begin and end
 #PBS -M dhiman@umich.edu     # Email id to alert
@@ -24,10 +24,12 @@ git pull
 python <<EOF
 from baselines.her.experiment.train_many import (exp_conf_path_reward,
                                                  run_one_experiment)
-experiments, common_kwargs = exp_conf_path_reward(num_cpu = 6)
-experiment_id = $PBS_ARRAYID + 0
+exp_conf, common_kwargs = exp_conf_path_reward(num_cpu = 6)
+experiments = list(exp_conf.items())
+experiment_id = 0 # + $PBS_ARRAYID
 print("Running experiment no {}/{} with {}".format(
     experiment_id, len(experiments), experiments[experiment_id]))
-#run_one_experiment(*experiments[experiment_id], common_kwargs)
+confname, conf = experiments[experiment_id]
+run_one_experiment(confname, conf, common_kwargs)
 EOF
 echo "end of pbs script"
