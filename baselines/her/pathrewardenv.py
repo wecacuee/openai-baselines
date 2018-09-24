@@ -21,16 +21,18 @@ class PathRewardEnv(Wrapper):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self.achieved_goal_past_two = [None, None]
+        self.reward_compute_count = 0
 
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
+        self.reward_compute_count += 1
         if self.reward_type == self.SPARSE_PATH:
             return -np.array(1, dtype=np.float32)
         elif self.reward_type == self.CONT_STEP_LENGTH:
             d_ag_pag = goal_distance(self.achieved_goal_past_two[0], achieved_goal)
             return -d_ag_pag
         else:
-            raise ValueError("Bad reward_type {}".format(self.reward_type))
+            return self.env.compute_reward(achieved_goal, goal, info)
 
     def reset(self, **kwargs):
         obs = self.env.reset(**kwargs)
@@ -43,7 +45,11 @@ class PathRewardEnv(Wrapper):
         obs, rew, done, info = self.env.step(act)
         new_rew = (self.compute_reward(obs['achieved_goal'], obs['desired_goal'], info)
                    if (self.reward_type in self.MY_REWARD_TYPES) else rew)
+        if self.reward_type not in self.MY_REWARD_TYPES:
+            # step calls compute rewards
+            self.reward_compute_count += 1
         self.achieved_goal_past_two[1] = obs['achieved_goal']
+        info['reward_compute_count'] = self.reward_compute_count
         return obs, new_rew, done, info
 
     def __getattr__(self, attr):
@@ -104,6 +110,11 @@ register_wrapped_envs(
                            class_name_fn='{env_name}EnvCSL'.format,
                            name_fn = '{env_name}CSL-{version}'.format),
     kwargs=dict(reward_type=PathRewardEnv.CONT_STEP_LENGTH))
+register_wrapped_envs(
+    wrap_old_env = partial(new_name_and_entry_point,
+                           class_name_fn='{env_name}EnvSparse'.format,
+                           name_fn = '{env_name}Sparse-{version}'.format),
+    kwargs=dict(reward_type='sparse'))
 
 
 def is_wrapper_instance(obj, wrapper_class):
@@ -121,31 +132,47 @@ def is_wrapper_instance(obj, wrapper_class):
             (isinstance(obj, Wrapper) and
              is_wrapper_instance(obj.env, wrapper_class)))
 
-"""
->>> import gym
->>> env = gym.make("FetchReachCSL-v1")
->>> env.seed(0)
->>> _ = env.reset()
->>> for _ in range(5):
-...     obs, rew, _, _ = env.step(env.action_space.sample())
-...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
-...     print(rew, rew2)
--0.014871227185677292 -0.014871227185677292
--0.011468296518239359 -0.011468296518239359
--0.032561153606471986 -0.032561153606471986
--0.03601770057153719 -0.03601770057153719
--0.039249514565213195 -0.039249514565213195
+def dummy():
+    """
+    >>> import gym
+    >>> env = gym.make("FetchReachCSL-v1")
+    >>> _ = env.seed(0)
+    >>> _ = env.reset()
+    >>> for _ in range(5):
+    ...     obs, rew, _, info = env.step(env.action_space.sample())
+    ...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
+    ...     print(rew, rew2, info['reward_compute_count'])
+    -0.014871227185677292 -0.014871227185677292 1
+    -0.011468296518239359 -0.011468296518239359 3
+    -0.032561153606471986 -0.032561153606471986 5
+    -0.03601770057153719 -0.03601770057153719 7
+    -0.039249514565213195 -0.039249514565213195 9
 
->>> env = gym.make("FetchReachPR-v1")
->>> env.seed(0)
->>> _ = env.reset()
->>> for _ in range(5):
-...     obs, rew, _, _ = env.step(env.action_space.sample())
-...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
-...     print(rew, rew2)
--1.0 -1.0
--1.0 -1.0
--1.0 -1.0
--1.0 -1.0
--1.0 -1.0
-"""
+    >>> env = gym.make("FetchReachPR-v1")
+    >>> _ = env.seed(0)
+    >>> _ = env.reset()
+    >>> for _ in range(5):
+    ...     obs, rew, _, info = env.step(env.action_space.sample())
+    ...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
+    ...     print(rew, rew2, info['reward_compute_count'])
+    -1.0 -1.0 1
+    -1.0 -1.0 3
+    -1.0 -1.0 5
+    -1.0 -1.0 7
+    -1.0 -1.0 9
+
+
+    >>> env = gym.make("FetchReachSparse-v1")
+    >>> _ = env.seed(0)
+    >>> _ = env.reset()
+    >>> for _ in range(5):
+    ...     obs, rew, _, info = env.step(env.action_space.sample())
+    ...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
+    ...     print(rew, rew2, info['reward_compute_count'])
+    -1.0 -1.0 1
+    -1.0 -1.0 3
+    -1.0 -1.0 5
+    -1.0 -1.0 7
+    -1.0 -1.0 9
+    """
+    pass
