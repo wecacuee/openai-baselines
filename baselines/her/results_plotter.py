@@ -9,6 +9,7 @@ import os
 import os.path as osp
 from pathlib import Path
 from glob import glob
+import json
 
 import matplotlib.pyplot as plt
 
@@ -79,6 +80,33 @@ def default_figsize(
         A4WIDTH = mm2inches(210)):
     return (A4WIDTH / 2, A4WIDTH / 2 / 1.618)
 
+def jsonloadd(d, paramsjson='params.json'):
+    with open(os.path.join(d, paramsjson)) as f:
+        params = json.load(f)
+    return params
+
+
+def dict_diffs(params, ignore_keys):
+    union_keys = reduce(
+        set.intersection, (set(p.keys()) for p in params[1:]),
+        set(params[0].keys()))
+    union_keys = union_keys.difference(ignore_keys)
+    diffs = [dict() for _ in range(len(params))]
+    for k in union_keys:
+        if not all(params[0].get(k) == p.get(k) for p in params):
+            print("diff for key " + k)
+            for i, (dif, p) in enumerate(zip(diffs, params)):
+                diffs[i][k] = p.get(k)
+    return diffs
+
+
+def params_diffs(dirs, jsonloader=jsonloadd,
+                 ignore_keys=set(['env_name', 'logdir', 'hash_params'])):
+    assert len(dirs) >= 2
+    params = list(map(jsonloader, dirs))
+    diffs_kv = dict_diffs(params, ignore_keys=ignore_keys)
+    return ["-".join(map(str, diff.values())) for diff in diffs_kv]
+
 
 def plot_results(
         dirs,
@@ -95,6 +123,7 @@ def plot_results(
         figsize = default_figsize):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
+    dir_diffs = params_diffs(dirs)
     data = {d: progress_load_results(filenames)
             for d, filenames in zip(dirs, f_per_dirs)
             if len(filenames)}
@@ -102,9 +131,8 @@ def plot_results(
         fig = plt.figure(figsize=figsize())
         fig.subplots_adjust(left=0.175, bottom=0.20, top=0.98, right=0.98)
         ax = fig.add_subplot(1, 1, 1)
-        for d, clr in zip(data.keys(), COLORS):
+        for d, label, clr in zip(data.keys(), dir_diffs, COLORS):
             if xdatakey in data[d] and metric in data[d]:
-                label = diff_substr(dirs, d)
                 ax.plot(data[d][xdatakey], data[d][metric],
                         label=translations.get(label, label), color=clr)
         ax.set_xlabel(translations.get(xdatakey, xdatakey))
@@ -152,6 +180,19 @@ plot_results_04a8fc6 = partial(
                            "cc7daced": "[0.2, 0.4, 0.4]",
                            "c26d68c1": "[0.8, 0.1, 0.1]",
                           "923e5525": "[0.4, 0.3, 0.3]"}))
+
+plot_results_path_rewards = partial(
+    plot_results,
+    dirs = glob("/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/245b3c4-*-FetchReach*-v1-*-future-her_fwrl_path_reward"),
+    translations = merged(getdefarg(plot_results, 'translations'),
+                          {"ddpg-FetchReachPR-v1": "PR-ddpg",
+                           "qlset-FetchReach-v1": "qlst",
+                           "ddpg-FetchReach-v1": "ddpg",
+                           "dqst-FetchReach-v1": "dqst",
+                           "fwrl-FetchReach-v1": "fwrl",
+                           "qlst-FetchReachPR-v1": "PR-qlst",
+                           "fwrl-FetchReachPR-v1": "PR-fwrl",
+                           "dqst-FetchReachPR-v1": "PR-dqst"}))
 
 
 if __name__ == '__main__':

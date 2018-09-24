@@ -22,7 +22,7 @@ def separate_variations(kw):
 
 def config_vars_to_configs(config_vars):
     config_keys, config_vals = zip(*config_vars.items())
-    return {"-".join(vlist): dict(zip(config_keys, vlist))
+    return {"-".join(map(str, vlist)): dict(zip(config_keys, vlist))
             for vlist in product(*config_vals)}
 
 
@@ -38,8 +38,7 @@ def train_many(**kwargs):
     variations, kwargs = separate_variations(kwargs)
     for confname, conf in config_vars_to_configs(variations).items():
         conf.update(kwargs)
-        if 'exp_name' not in conf:
-            conf['exp_name'] = confname
+        conf['exp_name'] = "-".join((conf.get('exp_name', ''), confname))
         call_train(**conf)
         logdirs.append(
             DEFAULT_PARAMS['logdir'](**dict(DEFAULT_PARAMS, **conf)))
@@ -68,7 +67,7 @@ train_her_fwrl_path_reward = partial(
     train_many,
     exp_name = 'her_fwrl_path_reward',
     n_epochs = 20,
-    env = Variations(["FetchReachPR-v1", "FetchReach-v1"]),
+    env = Variations(["FetchSlideCSL-v1", "FetchSlidePR-v1", "FetchSlide-v1"]),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
 
