@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 from functools import wraps, partial
+from queue import Queue
 
 import gym
 import gym.envs.robotics
@@ -15,33 +16,35 @@ def goal_distance(goal_a, goal_b):
 class PathRewardEnv(Wrapper):
     SPARSE_PATH = 'sparse-path'
     CONT_STEP_LENGTH = 'cont-step-length'
+    MY_REWARD_TYPES = (SPARSE_PATH, CONT_STEP_LENGTH)
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self.prev_achieved_goal = None
+        self.achieved_goal_past_two = [None, None]
 
     def compute_reward(self, achieved_goal, goal, info):
         # Compute distance between goal and the achieved goal.
-        d = goal_distance(achieved_goal, goal)
-        if self.reward_type == 'sparse':
-            return -(d > self.distance_threshold).astype(np.float32)
-        elif self.reward_type == self.SPARSE_PATH:
+        if self.reward_type == self.SPARSE_PATH:
             return -np.array(1, dtype=np.float32)
         elif self.reward_type == self.CONT_STEP_LENGTH:
-            d_ag_pag = goal_distance(self.prev_achieved_goal, achieved_goal)
+            d_ag_pag = goal_distance(self.achieved_goal_past_two[0], achieved_goal)
             return -d_ag_pag
         else:
-            return -d
+            raise ValueError("Bad reward_type {}".format(self.reward_type))
 
     def reset(self, **kwargs):
         obs = self.env.reset(**kwargs)
-        self.prev_achieved_goal = obs['achieved_goal']
+        self.achieved_goal_past_two[0] = obs['achieved_goal']
+        self.achieved_goal_past_two[1] = obs['achieved_goal']
         return obs
 
     def step(self, act):
+        self.achieved_goal_past_two[0] = self.achieved_goal_past_two[1]
         obs, rew, done, info = self.env.step(act)
-        self.prev_achieved_goal = obs['achieved_goal']
-        return obs, rew, done, info
+        new_rew = (self.compute_reward(obs['achieved_goal'], obs['desired_goal'], info)
+                   if (self.reward_type in self.MY_REWARD_TYPES) else rew)
+        self.achieved_goal_past_two[1] = obs['achieved_goal']
+        return obs, new_rew, done, info
 
     def __getattr__(self, attr):
         return getattr(self.env, attr)
@@ -117,3 +120,32 @@ def is_wrapper_instance(obj, wrapper_class):
     return (isinstance(obj, wrapper_class) or
             (isinstance(obj, Wrapper) and
              is_wrapper_instance(obj.env, wrapper_class)))
+
+"""
+>>> import gym
+>>> env = gym.make("FetchReachCSL-v1")
+>>> env.seed(0)
+>>> _ = env.reset()
+>>> for _ in range(5):
+...     obs, rew, _, _ = env.step(env.action_space.sample())
+...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
+...     print(rew, rew2)
+-0.014871227185677292 -0.014871227185677292
+-0.011468296518239359 -0.011468296518239359
+-0.032561153606471986 -0.032561153606471986
+-0.03601770057153719 -0.03601770057153719
+-0.039249514565213195 -0.039249514565213195
+
+>>> env = gym.make("FetchReachPR-v1")
+>>> env.seed(0)
+>>> _ = env.reset()
+>>> for _ in range(5):
+...     obs, rew, _, _ = env.step(env.action_space.sample())
+...     rew2 = env.compute_reward(obs['achieved_goal'], obs['desired_goal'], dict())
+...     print(rew, rew2)
+-1.0 -1.0
+-1.0 -1.0
+-1.0 -1.0
+-1.0 -1.0
+-1.0 -1.0
+"""
