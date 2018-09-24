@@ -90,13 +90,13 @@ def dict_diffs(params, ignore_keys):
     union_keys = reduce(
         set.intersection, (set(p.keys()) for p in params[1:]),
         set(params[0].keys()))
-    union_keys = union_keys.difference(ignore_keys)
-    diffs = [dict() for _ in range(len(params))]
+    union_keys = sorted(union_keys.difference(ignore_keys))
+    diffs = [list() for _ in range(len(params))]
     for k in union_keys:
         if not all(params[0].get(k) == p.get(k) for p in params):
             print("diff for key " + k)
             for i, (dif, p) in enumerate(zip(diffs, params)):
-                diffs[i][k] = p.get(k)
+                diffs[i].append((k, p.get(k)))
     return diffs
 
 
@@ -105,7 +105,7 @@ def params_diffs(dirs, jsonloader=jsonloadd,
     assert len(dirs) >= 2
     params = list(map(jsonloader, dirs))
     diffs_kv = dict_diffs(params, ignore_keys=ignore_keys)
-    return ["-".join(map(str, diff.values())) for diff in diffs_kv]
+    return ["-".join(map(str, list(zip(*diff))[1])) for diff in diffs_kv]
 
 
 def plot_results(
@@ -185,14 +185,14 @@ plot_results_path_rewards = partial(
     plot_results,
     dirs = glob("/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/245b3c4-*-FetchReach*-v1-*-future-her_fwrl_path_reward"),
     translations = merged(getdefarg(plot_results, 'translations'),
-                          {"ddpg-FetchReachPR-v1": "PR-ddpg",
-                           "qlset-FetchReach-v1": "qlst",
-                           "ddpg-FetchReach-v1": "ddpg",
-                           "dqst-FetchReach-v1": "dqst",
-                           "fwrl-FetchReach-v1": "fwrl",
-                           "qlst-FetchReachPR-v1": "PR-qlst",
-                           "fwrl-FetchReachPR-v1": "PR-fwrl",
-                           "dqst-FetchReachPR-v1": "PR-dqst"}))
+                          {"FetchReachPR-v1-ddpg": "PR-ddpg",
+                             "FetchReach-v1-qlst": "qlst",
+                             "FetchReach-v1-ddpg": "ddpg",
+                             "FetchReach-v1-dqst": "dqst",
+                             "FetchReach-v1-fwrl": "fwrl",
+                           "FetchReachPR-v1-qlst": "PR-qlst",
+                           "FetchReachPR-v1-fwrl": "PR-fwrl",
+                           "FetchReachPR-v1-dqst": "PR-dqst"}))
 
 
 if __name__ == '__main__':
