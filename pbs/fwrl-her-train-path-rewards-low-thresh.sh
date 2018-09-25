@@ -25,7 +25,7 @@ git pull
 python <<EOF
 from baselines.her.experiment.train_many import (exp_conf_path_reward_low_thresh,
                                                  run_one_experiment)
-exp_conf, common_kwargs = exp_conf_path_reward_low_thresh(num_cpu = 6)
+exp_conf, common_kwargs = exp_conf_path_reward_low_thresh(num_cpu = 6, gitrev = "11cefff")
 experiments = list(exp_conf.items())
 experiment_id = 0 + $PBS_ARRAYID
 print("Running experiment no {}/{} with {}".format(
@@ -34,3 +34,19 @@ confname, conf = experiments[experiment_id]
 run_one_experiment(confname, conf, common_kwargs)
 EOF
 echo "end of pbs script"
+
+# # dhiman@fovea:~/.../ext/openai-baselines$ python -c 'from baselines.her.experiment.train_many import exp_conf_path_reward_low_thresh; print("\n".join(map(str, enumerate(exp_conf_path_reward_low_thresh()[0].items()))))'
+# Choosing the latest nvidia driver: /usr/lib/nvidia-384, among ['/usr/lib/nvidia-352', '/usr/lib/nvidia-375', '/usr/lib/nvidia-384']
+# Choosing the latest nvidia driver: /usr/lib/nvidia-384, among ['/usr/lib/nvidia-352', '/usr/lib/nvidia-375', '/usr/lib/nvidia-384']
+# (0, ('FetchReachSparse-v1-dqst', {'env': 'FetchReachSparse-v1', 'loss_term': 'dqst'}))
+# (1, ('FetchReachSparse-v1-fwrl', {'env': 'FetchReachSparse-v1', 'loss_term': 'fwrl'}))
+# (2, ('FetchReachSparse-v1-ddpg', {'env': 'FetchReachSparse-v1', 'loss_term': 'ddpg'}))
+# (3, ('FetchReachPR-v1-dqst', {'env': 'FetchReachPR-v1', 'loss_term': 'dqst'}))
+# (4, ('FetchReachPR-v1-fwrl', {'env': 'FetchReachPR-v1', 'loss_term': 'fwrl'}))
+# (5, ('FetchReachPR-v1-ddpg', {'env': 'FetchReachPR-v1', 'loss_term': 'ddpg'}))
+# (6, ('FetchPushSparse-v1-dqst', {'env': 'FetchPushSparse-v1', 'loss_term': 'dqst'}))
+# (7, ('FetchPushSparse-v1-fwrl', {'env': 'FetchPushSparse-v1', 'loss_term': 'fwrl'}))
+# (8, ('FetchPushSparse-v1-ddpg', {'env': 'FetchPushSparse-v1', 'loss_term': 'ddpg'}))
+# (9, ('FetchPushPR-v1-dqst', {'env': 'FetchPushPR-v1', 'loss_term': 'dqst'}))
+# (10, ('FetchPushPR-v1-fwrl', {'env': 'FetchPushPR-v1', 'loss_term': 'fwrl'}))
+# (11, ('FetchPushPR-v1-ddpg', {'env': 'FetchPushPR-v1', 'loss_term': 'ddpg'}))

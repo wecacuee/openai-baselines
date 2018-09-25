@@ -234,6 +234,10 @@ def launch(
               type=float,
               default=0.05,
               help='Distance threshold for the goal achieved computation')
+@click.option('--n_epochs',
+              type=int,
+              default=0,
+              help='ignored')
 def main(**kwargs):
     return launch(**kwargs)
 
