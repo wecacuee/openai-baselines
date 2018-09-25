@@ -238,6 +238,10 @@ def launch(
               type=int,
               default=0,
               help='ignored')
+@click.option('--goal_noise',
+              type=click.Choice(config.GoalNoise.options()),
+              default='zero',
+              help='How to add noise to goals')
 def main(**kwargs):
     return launch(**kwargs)
 

@@ -257,11 +257,13 @@ def compute_middle(t_samples, future_all_t):
 
 def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
                              future_p=None, reward_fun=None, recompute_rewards=True,
-                             intermediate_sampling=sample_uniform):
+                             intermediate_sampling=sample_uniform,
+                             goal_noise=None):
     """episode_batch is {key: array(buffer_size x T x dim_key)}
     """
     assert future_p is not None
     assert reward_fun is not None
+    assert goal_noise is not None
     T = episode_batch['u'].shape[1]
     rollout_batch_size = episode_batch['u'].shape[0]
     batch_size = batch_size_in_transitions
@@ -287,11 +289,13 @@ def _sample_fwrl_transitions(episode_batch, batch_size_in_transitions,
     # keep the original goal.
     # NOTE: HER transitions g <- ag
     future_ag = episode_batch['ag'][episode_idxs[her_indexes], future_t]
-    transitions['g'][her_indexes] = future_ag
+    transitions['g'][her_indexes] = future_ag + goal_noise(future_ag)
 
     # Add intermediate goal information for FWRL
     intermediate_t = intermediate_sampling(t_samples, future_all_t)
-    transitions['ag_im'] = episode_batch['ag'][episode_idxs, intermediate_t]
+    transitions['ag_im'] = (
+        episode_batch['ag'][episode_idxs, intermediate_t] +
+        goal_noise(episode_batch['ag'][episode_idxs, intermediate_t]))
     transitions['o_im'] = episode_batch['o'][episode_idxs, intermediate_t]
 
     # Reconstruct info dictionary for reward  computation.

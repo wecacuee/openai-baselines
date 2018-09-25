@@ -54,6 +54,7 @@ def train_many(**kwargs):
     print(logdirs)
     plot_results(logdirs)
 
+
 def environ_list():
     return [
         # "FetchReach-v1",
@@ -106,6 +107,41 @@ exp_conf_path_reward = partial(
         "HandManipulateEggFullPR-v0"],
     ),
     loss_term = Variations(["dqst", "fwrl", "ddpg"]))
+
+
+exp_conf_path_reward_goal_noise = partial(
+    experiment_configurations,
+    exp_name = 'path_reward',
+    env = Variations([
+        "FetchReach-v1",
+        "FetchReachPR-v1",
+        "FetchPush-v1",
+        "FetchPushPR-v1",
+        # "FetchPickAndPlace-v1",
+        # "FetchPickAndPlacePR-v1",
+        # "HandReach-v0",
+        # "HandReachPR-v0",
+        # "HandManipulateBlockRotateXYZ-v0",
+        # "HandManipulatePenRotate-v0",
+        # "HandManipulateEggFull-v0",
+        # "HandManipulateBlockRotateXYZPR-v0",
+        # "HandManipulatePenRotatePR-v0",
+        # "HandManipulateEggFullPR-v0"
+    ]),
+    loss_term = Variations(["dqst", "ddpg"]),
+    goal_noise = Variations(["uniform", "zero"]))
+
+
+exp_conf_path_reward_low_thresh = partial(
+    experiment_configurations,
+    exp_name = 'path_reward_low_thresh',
+    distance_threshold = 0.01,
+    env = Variations([
+        "FetchReach-v1",
+        "FetchReachPR-v1",
+        "FetchPush-v1",
+        "FetchPushPR-v1"]),
+    loss_term = Variations(["dqst", "ddpg"]))
 
 
 exp_conf_path_reward_low_thresh = partial(

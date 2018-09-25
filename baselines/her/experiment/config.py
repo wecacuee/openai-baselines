@@ -68,6 +68,28 @@ def hashkwargs(l=8, **kwargs):
     ).hexdigest()[:l]
 
 
+class GoalNoise:
+    @classmethod
+    def options(cls):
+        return ['uniform', 'zero']
+
+    @classmethod
+    def from_str(cls, name):
+        return getattr(cls, name)
+
+    @staticmethod
+    def uniform(goal, distance_threshold=0.05):
+        return np.random.rand(*goal.shape) * distance_threshold
+
+    @staticmethod
+    def zero(goal, distance_threshold=0.05):
+        return 0
+
+    @staticmethod
+    def gaussian(goal, distance_threshold=0.05):
+        return np.random.normal(0, distance_threshold / 3, size=goal.shape)
+
+
 DEFAULT_ENV_PARAMS = {
     'FetchReach-v1': {
         'n_cycles': 10,
@@ -170,7 +192,8 @@ DEFAULT_PARAMS = {
     'intermediate_sampling': 'uniform', # {uniform|middle}'
     'exp_name': '',
     'recompute_rewards': True,
-    'distance_threshold': 0.05
+    'distance_threshold': 0.05,
+    'goal_noise': GoalNoise.zero,
 }
 
 
@@ -242,6 +265,10 @@ def prepare_params(kwargs):
     else:
         kwargs['recompute_rewards'] = True
 
+    kwargs['goal_noise'] = partial(
+        GoalNoise.from_str(kwargs['goal_noise']),
+        distance_threshold=kwargs['distance_threshold'])
+
     return kwargs
 
 
@@ -262,7 +289,7 @@ def get_her_params(params):
         'reward_fun': reward_fun,
     }
 
-    for name in ['replay_strategy', 'replay_k', 'recompute_rewards']:
+    for name in ['replay_strategy', 'replay_k', 'recompute_rewards', 'goal_noise']:
         her_params[name] = params[name]
         params['_' + name] = her_params[name]
         del params[name]
