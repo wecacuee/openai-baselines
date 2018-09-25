@@ -93,23 +93,23 @@ class GoalNoise:
 DEFAULT_ENV_PARAMS = {
     'FetchReach-v1': {
         'n_cycles': 10,
-        'n_epochs': 10,
+        'n_epochs': 60,
     },
     'FetchPush-v1': {
-        'n_epochs': 30
+        'n_epochs': 60
     },
     'FetchSlide-v1': {
         'n_epochs': 200
     },
     'FetchPickAndPlace-v1': {
-        'n_epochs': 200
+        'n_epochs': 100
     },
     'FetchReachPR-v1': {
         'n_cycles': 10,
-        'n_epochs': 10,
+        'n_epochs': 60 ,
     },
     'FetchPushPR-v1': {
-        'n_epochs': 30
+        'n_epochs': 60
     },
     'FetchSlidePR-v1': {
         'n_epochs': 200
@@ -118,7 +118,7 @@ DEFAULT_ENV_PARAMS = {
         'n_epochs': 200
     },
     'HandReach-v0': {
-        'n_epochs': 30
+        'n_epochs': 60
     },
     'HandManipulateBlock-v0': {
         'n_epochs': 200
@@ -130,7 +130,7 @@ DEFAULT_ENV_PARAMS = {
         'n_epochs': 200
     },
     'HandReachPR-v0': {
-        'n_epochs': 30
+        'n_epochs': 60
     },
     'HandManipulateBlockPR-v0': {
         'n_epochs': 200
