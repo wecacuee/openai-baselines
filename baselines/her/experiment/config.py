@@ -140,6 +140,7 @@ DEFAULT_PARAMS = {
     'intermediate_sampling': 'uniform', # {uniform|middle}'
     'exp_name': '',
     'recompute_rewards': True,
+    'distance_threshold': 0.05
 }
 
 
@@ -169,14 +170,20 @@ def preprocess_params(params):
     return params
 
 
+def gym_make_kw(env_name, **kw):
+    env = gym.make(env_name)
+    if hasattr(env.unwrapped, "distance_threshold"):
+        env.unwrapped.distance_threshold = kw['distance_threshold']
+    return env
+
+
 def prepare_params(kwargs):
     # DDPG params
     ddpg_params = dict()
 
     env_name = kwargs['env_name']
 
-    def make_env():
-        return gym.make(env_name)
+    make_env = partial(gym_make_kw, env_name, **kwargs)
     kwargs['make_env'] = make_env
     tmp_env = cached_make_env(kwargs['make_env'])
     assert hasattr(tmp_env, '_max_episode_steps')

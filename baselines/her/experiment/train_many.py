@@ -110,6 +110,18 @@ exp_conf_path_reward = partial(
     loss_term = Variations(["dqst", "fwrl", "ddpg"]))
 
 
+exp_conf_path_reward_low_thresh = partial(
+    experiment_configurations,
+    exp_name = 'path_reward_low_thresh',
+    distance_threshold = 0.01,
+    env = Variations([
+        "FetchReachSparse-v1",
+        "FetchReachPR-v1",
+        "FetchPushSparse-v1",
+        "FetchPushPR-v1"]),
+    loss_term = Variations(["dqst", "fwrl", "ddpg"]))
+
+
 train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',

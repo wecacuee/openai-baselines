@@ -150,7 +150,7 @@ def launch(
 
     dims = config.configure_dims(params)
     best_policy_path = get_best_policy_path(logger)
-    if False and rank == 0 and Path(best_policy_path).exists():
+    if False and Path(best_policy_path).exists():
         with open(os.path.join(logger.get_dir(), 'params.json'), 'r') as f:
             loaded_params = json.load(f)
 
@@ -231,6 +231,10 @@ def launch(
               type=str,
               default='',
               help='name for the experiment')
+@click.option('--distance_threshold',
+              type=float,
+              default=0.05,
+              help='Distance threshold for the goal achieved computation')
 def main(**kwargs):
     return launch(**kwargs)
 
