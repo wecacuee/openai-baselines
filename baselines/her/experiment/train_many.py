@@ -56,28 +56,28 @@ def train_many(**kwargs):
 
 def environ_list():
     return [
-        # "FetchReachSparse-v1",
-        # "FetchPushSparse-v1",
-        # "FetchSlideSparse-v1",
-        "FetchPickAndPlaceSparse-v1",
-        "HandReachSparse-v0",
-        "HandManipulateBlockSparse-v0",
-        "HandManipulatePenSparse-v0",
-        "HandManipulateEggSparse-v0",
+        # "FetchReach-v1",
+        # "FetchPush-v1",
+        # "FetchSlide-v1",
+        "FetchPickAndPlace-v1",
+        "HandReach-v0",
+        "HandManipulateBlockRotateXYZ-v0",
+        "HandManipulatePenRotate-v0",
+        "HandManipulateEggFull-v0",
         ]
 
 train_many_vars = partial(
     train_many,
     exp_name = 'many_envs',
     env = Variations([
-        # "FetchReachSparse-v1",
-        # "FetchPushSparse-v1",
-        # "FetchSlideSparse-v1",
-        # "FetchPickAndPlaceSparse-v1",
-        # "HandReachSparse-v0",
-        "HandManipulateBlockSparse-v0",
-        "HandManipulatePenSparse-v0",
-        "HandManipulateEggSparse-v0",
+        # "FetchReach-v1",
+        # "FetchPush-v1",
+        # "FetchSlide-v1",
+        # "FetchPickAndPlace-v1",
+        # "HandReach-v0",
+        "HandManipulateBlockRotateXYZ-v0",
+        "HandManipulatePenRotate-v0",
+        "HandManipulateEggFull-v0",
         ]),
     loss_term = Variations(["fwrl", "ddpg", "dqst", "qlst"]),
     replay_strategy = Variations(["future"]))
@@ -86,7 +86,7 @@ train_many_vars = partial(
 train_her_fwrl_path_reward = partial(
     train_many,
     exp_name = 'path_reward',
-    env = Variations(["FetchSlidePR-v1", "FetchSlideSparse-v1"]),
+    env = Variations(["FetchSlidePR-v1", "FetchSlide-v1"]),
     loss_term = Variations(["dqst", "qlst", "fwrl", "ddpg"]))
 
 
@@ -94,16 +94,16 @@ exp_conf_path_reward = partial(
     experiment_configurations,
     exp_name = 'path_reward',
     env = Variations([
-        "FetchPickAndPlaceSparse-v1",
+        "FetchPickAndPlace-v1",
         "FetchPickAndPlacePR-v1",
-        "HandReachSparse-v0",
+        "HandReach-v0",
         "HandReachPR-v0",
-        "HandManipulateBlockSparse-v0",
-        "HandManipulateBlockPR-v0",
-        "HandManipulatePenSparse-v0",
-        "HandManipulatePenPR-v0",
-        "HandManipulateEggSparse-v0",
-        "HandManipulateEggPR-v0"],
+        "HandManipulateBlockRotateXYZ-v0",
+        "HandManipulatePenRotate-v0",
+        "HandManipulateEggFull-v0",
+        "HandManipulateBlockRotateXYZPR-v0",
+        "HandManipulatePenRotatePR-v0",
+        "HandManipulateEggFullPR-v0"],
     ),
     loss_term = Variations(["dqst", "fwrl", "ddpg"]))
 
@@ -113,9 +113,9 @@ exp_conf_path_reward_low_thresh = partial(
     exp_name = 'path_reward_low_thresh',
     distance_threshold = 0.01,
     env = Variations([
-        "FetchReachSparse-v1",
+        "FetchReach-v1",
         "FetchReachPR-v1",
-        "FetchPushSparse-v1",
+        "FetchPush-v1",
         "FetchPushPR-v1"]),
     loss_term = Variations(["dqst", "fwrl", "ddpg"]))
 
@@ -124,7 +124,7 @@ train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',
     n_epochs = 20,
-    env = "FetchPushSparse-v1",
+    env = "FetchPush-v1",
     loss_term = "qlst",
     loss_term_weights_json = Variations(
         [json.dumps([i/max(1,i+j),
@@ -138,7 +138,7 @@ train_intmdt_sampling = partial(
     train_many,
     exp_name = 'intmdt_sampling',
     n_epochs = 20,
-    env = "FetchPushSparse-v1",
+    env = "FetchPush-v1",
     loss_term = "fwrl",
     intermediate_sampling = Variations([
         'middle', 'uniform']))

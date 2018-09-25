@@ -104,7 +104,8 @@ def dict_diffs(params, ignore_keys):
 
 
 def params_diffs(dirs, jsonloader=jsonloadd,
-                 ignore_keys=set(['env_name', 'exp_name', 'logdir', 'hash_params'])):
+                 ignore_keys=set(['env_name', 'exp_name', 'logdir',
+                                  'hash_params', 'n_epochs'])):
     assert len(dirs) >= 2
     params = list(map(jsonloader, dirs))
     diffs_kv = dict_diffs(params, ignore_keys=ignore_keys)
@@ -123,18 +124,20 @@ def plot_results(
                       "test/ag_g_dist": "Distance from goal (test)",
         },
         pattern = "./progress.csv",
-        figsize = default_figsize):
+        figsize = default_figsize,
+        crop_data = 60):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
-    dir_diffs = list(diff_substr(params_diffs(dirs)))
-    data = {d: progress_load_results(filenames)
+    data = {d: progress_load_results(filenames)[:crop_data]
             for d, filenames in zip(dirs, f_per_dirs)
             if len(filenames)}
+    data_dirs = sorted(data.keys())
+    dir_diffs = list(diff_substr(params_diffs(data_dirs)))
     for metric in metrics:
         fig = plt.figure(figsize=figsize())
         fig.subplots_adjust(left=0.175, bottom=0.20, top=0.98, right=0.98)
         ax = fig.add_subplot(1, 1, 1)
-        for d, label, clr in zip(data.keys(), dir_diffs, COLORS):
+        for d, label, clr in zip(data_dirs, dir_diffs, COLORS):
             if xdatakey in data[d] and metric in data[d]:
                 ax.plot(data[d][xdatakey], data[d][metric],
                         label=translations.get(label, label), color=clr)
@@ -142,7 +145,7 @@ def plot_results(
         ax.set_ylabel(translations.get(metric, metric))
         #ax.set_title(translations.get(metric, metric))
         ax.legend(prop=dict(size=6))
-        for d in data.keys():
+        for d in data_dirs:
             path = Path(osp.join(d, metric + ".pdf"))
             path.parent.mkdir(parents=True, exist_ok=True)
             print("Saving plot to {}".format(path))

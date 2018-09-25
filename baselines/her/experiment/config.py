@@ -69,17 +69,17 @@ def hashkwargs(l=8, **kwargs):
 
 
 DEFAULT_ENV_PARAMS = {
-    'FetchReachSparse-v1': {
+    'FetchReach-v1': {
         'n_cycles': 10,
         'n_epochs': 10,
     },
-    'FetchPushSparse-v1': {
+    'FetchPush-v1': {
         'n_epochs': 30
     },
-    'FetchSlideSparse-v1': {
+    'FetchSlide-v1': {
         'n_epochs': 200
     },
-    'FetchPickAndPlaceSparse-v1': {
+    'FetchPickAndPlace-v1': {
         'n_epochs': 200
     },
     'FetchReachPR-v1': {
@@ -95,16 +95,16 @@ DEFAULT_ENV_PARAMS = {
     'FetchPickAndPlacePR-v1': {
         'n_epochs': 200
     },
-    'HandReachSparse-v0': {
+    'HandReach-v0': {
         'n_epochs': 30
     },
-    'HandManipulateBlockSparse-v0': {
+    'HandManipulateBlock-v0': {
         'n_epochs': 200
     },
-    'HandManipulateEggSparse-v0': {
+    'HandManipulateEgg-v0': {
         'n_epochs': 200
     },
-    'HandManipulatePenSparse-v0': {
+    'HandManipulatePen-v0': {
         'n_epochs': 200
     },
     'HandReachPR-v0': {
@@ -158,9 +158,9 @@ DEFAULT_PARAMS = {
     'mid_dir': '/z/home/{user}/mid'.format,
     'project_name' : 'floyd-warshall-rl/openai-baselines/her',
     'gitrev': this_file_git_rev_fn,
-    'env' : "FetchReachSparse-v1",
+    'env' : "FetchReach-v1",
     'hash_params' : hashkwargs,
-    'env_name' : "FetchReachSparse-v1",
+    'env_name' : "FetchReach-v1",
     'logdir': "{mid_dir}/{project_name}/{gitrev}-{exp_name}".format,
     'n_epochs': 50,
     'seed': 0,
@@ -200,10 +200,10 @@ def preprocess_params(params):
     return params
 
 
-def gym_make_kw(env_name=None, **kw):
+def gym_make_kw(env_name=None, distance_threshold=None):
     env = gym.make(env_name)
     if hasattr(env.unwrapped, "distance_threshold"):
-        env.unwrapped.distance_threshold = kw['distance_threshold']
+        env.unwrapped.distance_threshold = distance_threshold
     return env
 
 
@@ -213,7 +213,8 @@ def prepare_params(kwargs):
 
     env_name = kwargs['env_name']
 
-    make_env = partial(gym_make_kw, **kwargs)
+    make_env = partial(gym_make_kw, env_name=env_name,
+                       distance_threshold=kwargs['distance_threshold'])
     kwargs['make_env'] = make_env
     tmp_env = cached_make_env(kwargs['make_env'])
     assert hasattr(tmp_env, '_max_episode_steps')
@@ -234,6 +235,13 @@ def prepare_params(kwargs):
         del kwargs[name]
     kwargs['ddpg_params'] = ddpg_params
 
+    env = cached_make_env(kwargs['make_env'])
+    if (is_wrapper_instance(env, PathRewardEnv) and
+            env.unwrapped.reward_type in PathRewardEnv.MY_REWARD_TYPES):
+        kwargs['recompute_rewards'] = False
+    else:
+        kwargs['recompute_rewards'] = True
+
     return kwargs
 
 
@@ -253,11 +261,6 @@ def get_her_params(params):
     her_params = {
         'reward_fun': reward_fun,
     }
-    if (is_wrapper_instance(env, PathRewardEnv)
-        and env.unwrapped.reward_type in PathRewardEnv.MY_REWARD_TYPES):
-        params['recompute_rewards'] = False
-    else:
-        params['recompute_rewards'] = True
 
     for name in ['replay_strategy', 'replay_k', 'recompute_rewards']:
         her_params[name] = params[name]

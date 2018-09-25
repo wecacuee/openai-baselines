@@ -25,7 +25,7 @@ git pull
 python <<EOF
 from baselines.her.experiment.train_many import (exp_conf_path_reward,
                                                  run_one_experiment)
-exp_conf, common_kwargs = exp_conf_path_reward(num_cpu = 6, gitrev = "d5cefef")
+exp_conf, common_kwargs = exp_conf_path_reward(num_cpu = 6, gitrev = "d0a8dd4")
 experiments = list(exp_conf.items())
 experiment_id = 0 + $PBS_ARRAYID
 print("Running experiment no {}/{} with {}".format(
