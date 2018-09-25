@@ -117,7 +117,7 @@ exp_conf_path_reward_low_thresh = partial(
         "FetchReachPR-v1",
         "FetchPush-v1",
         "FetchPushPR-v1"]),
-    loss_term = Variations(["dqst", "fwrl", "ddpg"]))
+    loss_term = Variations(["dqst", "ddpg"]))
 
 
 train_loss_term_weights = partial(
