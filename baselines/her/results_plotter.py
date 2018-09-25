@@ -148,7 +148,7 @@ def plot_results(
         #ax.set_title(translations.get(metric, metric))
         ax.legend(prop=dict(size=6))
         for d in data_dirs:
-            path = Path(osp.join(d, metric + ".pdf"))
+            path = Path(osp.join(d, xdatakey + "-" + metric + ".pdf"))
             path.parent.mkdir(parents=True, exist_ok=True)
             print("Saving plot to {}".format(path))
             fig.savefig(str(path))
@@ -191,7 +191,13 @@ def plot_results_grouped(rootdir, dir_patterns, **kw):
     for dirp in dir_patterns:
         plot_results(glob_files(rootdir, patterns = [dirp]), **kw)
 
-main = plot_metrics_on_reward_computes
+def runall(fs, *a, **kw):
+    return [f(*a, **kw) for f in fs]
+
+
+main = partial(
+    runall,
+    [plot_metrics_on_reward_computes, plot_results])
 
 main_grouped = partial(plot_results_grouped,
                        '/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/',

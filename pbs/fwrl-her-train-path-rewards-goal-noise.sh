@@ -54,4 +54,6 @@ echo "end of pbs script"
 # (13, ('FetchPushPR-v1-dqst-zero', {'env': 'FetchPushPR-v1', 'loss_term': 'dqst', 'goal_noise': 'zero'}))
 # (14, ('FetchPushPR-v1-ddpg-uniform', {'env': 'FetchPushPR-v1', 'loss_term': 'ddpg', 'goal_noise': 'uniform'}))
 # (15, ('FetchPushPR-v1-ddpg-zero', {'env': 'FetchPushPR-v1', 'loss_term': 'ddpg', 'goal_noise': 'zero'}))
+#
+# Ran job ids 88959, 88958
 

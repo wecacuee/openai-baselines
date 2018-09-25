@@ -20,7 +20,7 @@ def separate_variations(kw):
              if not isinstance(v, Variations)})
 
 
-def config_vars_to_configs(config_vars):
+def config_vars_to_configs(**config_vars):
     config_keys, config_vals = zip(*config_vars.items())
     return {"-".join(map(str, vlist)): dict(zip(config_keys, vlist))
             for vlist in product(*config_vals)}
@@ -41,7 +41,7 @@ def run_one_experiment(confname, var_conf, common_kwargs):
 
 def experiment_configurations(**kwargs):
     variations, common_kwargs = separate_variations(kwargs)
-    return config_vars_to_configs(variations), common_kwargs
+    return config_vars_to_configs(**variations), common_kwargs
 
 
 def train_many(**kwargs):
@@ -144,16 +144,59 @@ exp_conf_path_reward_low_thresh = partial(
     loss_term = Variations(["dqst", "ddpg"]))
 
 
-exp_conf_path_reward_low_thresh = partial(
-    experiment_configurations,
-    exp_name = 'path_reward_low_thresh',
-    distance_threshold = 0.01,
-    env = Variations([
-        "FetchReach-v1",
-        "FetchReachPR-v1",
-        "FetchPush-v1",
-        "FetchPushPR-v1"]),
-    loss_term = Variations(["dqst", "ddpg"]))
+def merge(d1, *d2args):
+    d1c = d1.copy()
+    for d2 in d2args:
+        d1c.update(d2)
+    return d1c
+
+
+def expconf(configs, **kwargs):
+    return configs, kwargs
+
+exp_conf_path_reward_low_thresh_chosen = partial(
+    expconf,
+    merge(
+        config_vars_to_configs(
+            env = Variations([
+                "FetchReach-v1",
+                "FetchPush-v1",
+                "FetchSlide-v1",
+                "FetchPickAndPlace-v1",
+                "HandReach-v0",
+                "HandManipulateBlockRotateXYZ-v0",
+                "HandManipulatePenRotate-v0",
+                "HandManipulateEggFull-v0",
+            ]),
+            loss_term = Variations(["fwrl", "ddpg"])),
+        config_vars_to_configs(
+            env = Variations([
+                "FetchReach-v1",
+                "FetchPush-v1",
+                "FetchSlide-v1",
+                "FetchPickAndPlace-v1",
+                "HandReach-v0",
+                "HandManipulateBlockRotateXYZ-v0",
+                "HandManipulatePenRotate-v0",
+                "HandManipulateEggFull-v0",
+                "FetchReachPR-v1",
+                "FetchPushPR-v1",
+                "FetchSlidePR-v1",
+                "FetchPickAndPlacePR-v1",
+                "HandReachPR-v0",
+                "HandManipulateBlockRotateXYZPR-v0",
+                "HandManipulatePenRotatePR-v0",
+                "HandManipulateEggFullPR-v0"
+            ]),
+            loss_term = Variations(["dqst"]))),
+    exp_name = 'path_reward_low_thresh_chosen',
+    distance_threshold = 0.01)
+
+
+exp_conf_path_reward_low_thresh_noisy_chosen = partial(
+    exp_conf_path_reward_low_thresh_chosen,
+    exp_name = 'path_reward_low_thresh_noisy_chosen',
+    goal_noise = 'uniform')
 
 
 train_loss_term_weights = partial(
