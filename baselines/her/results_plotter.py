@@ -11,6 +11,7 @@ from pathlib import Path
 from glob import glob
 import json
 
+import pandas
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -35,7 +36,6 @@ def glob_files(dir_, patterns):
 
 
 def progress_load_results(filenames):
-    import pandas
     data = []
     for fname in filenames:
         try:
@@ -118,6 +118,7 @@ def plot_results(
         metrics = """test/success_rate
         test/mean_Q train/critic_loss test/ag_g_dist""".split(),
         translations={"epoch": "Epoch",
+                      "reward_computes": "Reward computes",
                       "test/success_rate": "Success rate (test)",
                       "test/mean_Q": "Q (test)",
                       "train/critic_loss" : "Critic loss (train)",
@@ -128,7 +129,8 @@ def plot_results(
         crop_data = 60):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
-    data = {d: progress_load_results(filenames)[:crop_data]
+    data = {d: add_reward_compute_count(
+        progress_load_results(filenames)[:crop_data], d)
             for d, filenames in zip(dirs, f_per_dirs)
             if len(filenames)}
     data_dirs = sorted(data.keys())
@@ -152,11 +154,44 @@ def plot_results(
             fig.savefig(str(path))
 
 
+plot_metrics_on_reward_computes = partial(
+    plot_results,
+    xdatakey = "reward_computes")
+
+
+def compute_reward_compute_from_epochs(epochs, recompute_rewards,
+                                       n_cycles, rollout_batch_size,
+                                       batch_size, T=50):
+    episodes = epochs * n_cycles * rollout_batch_size
+    nsteps = episodes * T
+
+    if recompute_rewards:
+        ntrains = epochs * n_cycles
+        n_reward_recomputes = ntrains * batch_size
+    else:
+        n_reward_recomputes = 0
+    return nsteps + n_reward_recomputes
+
+
+def add_reward_compute_count(progress, datadir, jsonloader=jsonloadd):
+    params = jsonloader(datadir)
+    recompute_rewards = False if "PR-v" in params["env_name"] else True
+    reward_computes = compute_reward_compute_from_epochs(
+        progress['epoch'], recompute_rewards = recompute_rewards,
+        n_cycles = params['n_cycles'],
+        rollout_batch_size = params['rollout_batch_size'],
+        batch_size = params['batch_size'])
+    progress.loc[:, 'reward_computes'] = pandas.Series(
+        reward_computes, index=progress.index)
+    return progress
+
+
+
 def plot_results_grouped(rootdir, dir_patterns, **kw):
     for dirp in dir_patterns:
         plot_results(glob_files(rootdir, patterns = [dirp]), **kw)
 
-main = plot_results
+main = plot_metrics_on_reward_computes
 
 main_grouped = partial(plot_results_grouped,
                        '/z/home/dhiman/mid/floyd-warshall-rl/openai-baselines/her/',
