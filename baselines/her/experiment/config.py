@@ -74,9 +74,12 @@ DEFAULT_ENV_PARAMS = {
         'n_epochs': 10,
     },
     'FetchPushSparse-v1': {
-        'n_epochs': 20
+        'n_epochs': 30
     },
     'FetchSlideSparse-v1': {
+        'n_epochs': 200
+    },
+    'FetchPickAndPlaceSparse-v1': {
         'n_epochs': 200
     },
     'FetchReachPR-v1': {
@@ -84,11 +87,38 @@ DEFAULT_ENV_PARAMS = {
         'n_epochs': 10,
     },
     'FetchPushPR-v1': {
-        'n_epochs': 20
+        'n_epochs': 30
     },
     'FetchSlidePR-v1': {
         'n_epochs': 200
-    }
+    },
+    'FetchPickAndPlacePR-v1': {
+        'n_epochs': 200
+    },
+    'HandReachSparse-v0': {
+        'n_epochs': 30
+    },
+    'HandManipulateBlockSparse-v0': {
+        'n_epochs': 200
+    },
+    'HandManipulateEggSparse-v0': {
+        'n_epochs': 200
+    },
+    'HandManipulatePenSparse-v0': {
+        'n_epochs': 200
+    },
+    'HandReachPR-v0': {
+        'n_epochs': 30
+    },
+    'HandManipulateBlockPR-v0': {
+        'n_epochs': 200
+    },
+    'HandManipulateEggPR-v0': {
+        'n_epochs': 200
+    },
+    'HandManipulatePenPR-v0': {
+        'n_epochs': 200
+    },
 }
 
 
@@ -132,7 +162,7 @@ DEFAULT_PARAMS = {
     'hash_params' : hashkwargs,
     'env_name' : "FetchReachSparse-v1",
     'logdir': "{mid_dir}/{project_name}/{gitrev}-{exp_name}".format,
-    'n_epochs': 30,
+    'n_epochs': 50,
     'seed': 0,
     'replay_strategy': 'future',
     'policy_save_interval': 5,
@@ -170,7 +200,7 @@ def preprocess_params(params):
     return params
 
 
-def gym_make_kw(env_name, **kw):
+def gym_make_kw(env_name=None, **kw):
     env = gym.make(env_name)
     if hasattr(env.unwrapped, "distance_threshold"):
         env.unwrapped.distance_threshold = kw['distance_threshold']
@@ -183,7 +213,7 @@ def prepare_params(kwargs):
 
     env_name = kwargs['env_name']
 
-    make_env = partial(gym_make_kw, env_name, **kwargs)
+    make_env = partial(gym_make_kw, **kwargs)
     kwargs['make_env'] = make_env
     tmp_env = cached_make_env(kwargs['make_env'])
     assert hasattr(tmp_env, '_max_episode_steps')

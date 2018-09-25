@@ -90,7 +90,7 @@ def train(policy, rollout_worker, evaluator,
 
 
 def launch(
-        env, logdir, n_epochs, num_cpu, seed, replay_strategy, policy_save_interval, clip_return,
+        env, logdir, num_cpu, seed, replay_strategy, policy_save_interval, clip_return,
         save_policies=True,
         **override_params
 ):
@@ -198,7 +198,7 @@ def launch(
 
     train(
         logdir=logdir, policy=policy, rollout_worker=rollout_worker,
-        evaluator=evaluator, n_epochs=n_epochs, n_test_rollouts=params['n_test_rollouts'],
+        evaluator=evaluator, n_epochs=params['n_epochs'], n_test_rollouts=params['n_test_rollouts'],
         n_cycles=params['n_cycles'], n_batches=params['n_batches'],
         policy_save_interval=policy_save_interval, save_policies=save_policies)
     return params
@@ -209,7 +209,6 @@ def launch(
 @click.option('--logdir', type=str,
               default="",
               help='the path to where logs and policy pickles should go. If not specified, creates a folder in /tmp/')
-@click.option('--n_epochs', type=int, default=50, help='the number of training epochs to run')
 @click.option('--num_cpu', type=int, default=1, help='the number of CPU cores to use (using MPI)')
 @click.option('--seed', type=int, default=0, help='the random seed used to seed both the environment and the training code')
 @click.option('--policy_save_interval', type=int, default=5, help='the interval with which policy pickles are saved. If set to 0, only the best and latest policy will be pickled.')
