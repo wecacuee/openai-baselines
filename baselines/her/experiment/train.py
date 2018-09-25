@@ -90,7 +90,7 @@ def train(policy, rollout_worker, evaluator,
 
 
 def launch(
-        env, logdir, num_cpu, seed, replay_strategy, policy_save_interval, clip_return,
+        env, logdir, n_epochs, num_cpu, seed, replay_strategy, policy_save_interval, clip_return,
         save_policies=True,
         **override_params
 ):
