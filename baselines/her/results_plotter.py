@@ -10,6 +10,7 @@ import os.path as osp
 from pathlib import Path
 from glob import glob
 import json
+import numpy as np
 
 import pandas
 import matplotlib
@@ -112,13 +113,19 @@ def params_diffs(dirs, jsonloader=jsonloadd,
     return ["-".join(map(str, list(zip(*diff))[1])) for diff in diffs_kv]
 
 
+def moving_average(a, n=5):
+    ret = np.cumsum(a)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret / n
+
+
 def plot_results(
         dirs,
         xdatakey = "epoch",
         metrics = """test/success_rate
         test/mean_Q train/critic_loss test/ag_g_dist""".split(),
         translations={"epoch": "Epoch",
-                      "reward_computes": "Reward computes x 1000",
+                      "reward_computes": "Reward computes / 1000",
                       "test/success_rate": "Success rate (test)",
                       "test/mean_Q": "Q (test)",
                       "train/critic_loss" : "Critic loss (train)",
@@ -158,6 +165,7 @@ def plot_results(
         },
         pattern = "./progress.csv",
         figsize = default_figsize,
+        moving_average_n = partial(moving_average, n = 5),
         crop_data = 200):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
@@ -174,7 +182,8 @@ def plot_results(
         ax = fig.add_subplot(1, 1, 1)
         for d, label, clr in zip(data_dirs, dir_diffs, COLORS):
             if xdatakey in data[d] and metric in data[d]:
-                ax.plot(data[d][xdatakey], data[d][metric],
+                ax.plot(data[d][xdatakey],
+                        moving_average_n(data[d][metric].values),
                         label=translations.get(label, label), color=clr)
         ax.set_xlabel(translations.get(xdatakey, xdatakey))
         ax.set_ylabel(translations.get(metric, metric))
