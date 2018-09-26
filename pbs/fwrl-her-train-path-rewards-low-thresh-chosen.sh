@@ -68,3 +68,9 @@ echo "end of pbs script"
 # (29, ('HandManipulateBlockRotateXYZPR-v0-dqst', {'env': 'HandManipulateBlockRotateXYZPR-v0', 'loss_term': 'dqst'}))
 # (30, ('HandManipulatePenRotatePR-v0-dqst', {'env': 'HandManipulatePenRotatePR-v0', 'loss_term': 'dqst'}))
 # (31, ('HandManipulateEggFullPR-v0-dqst', {'env': 'HandManipulateEggFullPR-v0', 'loss_term': 'dqst'}))
+
+## Logs
+# Ran exp id 88962, 88965[].blindspot, 88971[
+# qsub -l nodes=1:ppn=5:gpus=1 -t 1,10,11,12,13,14,15,16,17,2,20,24,28,29,3,4,5,6,7,8,9 pbs/fwrl-her-train-path-rewards-low-thresh-chosen.sh
+# qsub -l nodes=1:ppn=5:gpus=1 -t 4,5,6,9 pbs/fwrl-her-train-path-rewards-low-thresh-chosen.sh
+# qstat -tu dhiman | grep -E '88962|88965|88971|88972|88973' | grep -E 'R|Q' | cut -d] -f 1 | cut -d[ -f 2 | sort -n

@@ -118,7 +118,7 @@ def plot_results(
         metrics = """test/success_rate
         test/mean_Q train/critic_loss test/ag_g_dist""".split(),
         translations={"epoch": "Epoch",
-                      "reward_computes": "Reward computes",
+                      "reward_computes": "Reward computes x 1000",
                       "test/success_rate": "Success rate (test)",
                       "test/mean_Q": "Q (test)",
                       "train/critic_loss" : "Critic loss (train)",
@@ -136,6 +136,7 @@ def plot_results(
     data_dirs = sorted(data.keys())
     dir_diffs = list(diff_substr(params_diffs(data_dirs)))
     for metric in metrics:
+        plt.rc('text', usetex=True)
         fig = plt.figure(figsize=figsize())
         fig.subplots_adjust(left=0.175, bottom=0.20, top=0.98, right=0.98)
         ax = fig.add_subplot(1, 1, 1)
@@ -170,7 +171,7 @@ def compute_reward_compute_from_epochs(epochs, recompute_rewards,
         n_reward_recomputes = ntrains * batch_size
     else:
         n_reward_recomputes = 0
-    return nsteps + n_reward_recomputes
+    return (nsteps + n_reward_recomputes) / 1000
 
 
 def add_reward_compute_count(progress, datadir, jsonloader=jsonloadd):
