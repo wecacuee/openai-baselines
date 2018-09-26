@@ -199,6 +199,19 @@ exp_conf_path_reward_low_thresh_noisy_chosen = partial(
     goal_noise = 'uniform')
 
 
+exp_conf_path_reward_100_epochs = partial(
+    experiment_configurations,
+    exp_name = 'path_reward_100_epochs',
+    loss_term = "dqst",
+    env = Variations([
+        "FetchReachPR-v1",
+        "FetchPushPR-v1",
+        "FetchPickAndPlacePR-v1",
+        "HandReachPR-v0",
+    ]),
+    distance_threshold = 0.01)
+
+
 train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',

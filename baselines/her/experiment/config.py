@@ -106,10 +106,10 @@ DEFAULT_ENV_PARAMS = {
     },
     'FetchReachPR-v1': {
         'n_cycles': 10,
-        'n_epochs': 60 ,
+        'n_epochs': 100 ,
     },
     'FetchPushPR-v1': {
-        'n_epochs': 60
+        'n_epochs': 100
     },
     'FetchSlidePR-v1': {
         'n_epochs': 200
@@ -130,7 +130,7 @@ DEFAULT_ENV_PARAMS = {
         'n_epochs': 200
     },
     'HandReachPR-v0': {
-        'n_epochs': 60
+        'n_epochs': 100
     },
     'HandManipulateBlockPR-v0': {
         'n_epochs': 200
