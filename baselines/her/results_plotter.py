@@ -139,10 +139,26 @@ def plot_results(
                       "FetchPickAndPlace-fwrl": "FWRL (Dhiman et al. 2018)",
                       "FetchPickAndPlace-dqst": "Ours (goal rewards)",
                       "FetchPickAndPlacePR-dqst": "Ours (NO goal rewards)",
+                      "HandReach-ddpg": "HER (Andrychowicz et al., 2017)",
+                      "HandReach-fwrl": "FWRL (Dhiman et al. 2018)",
+                      "HandReach-dqst": "Ours (goal rewards)",
+                      "HandReachPR-dqst": "Ours (NO goal rewards)",
+                      "HandManipulateBlockRotateXYZ-ddpg": "HER (Andrychowicz et al., 2017)",
+                      "HandManipulateBlockRotateXYZ-fwrl": "FWRL (Dhiman et al. 2018)",
+                      "HandManipulateBlockRotateXYZ-dqst": "Ours (goal rewards)",
+                      "HandManipulateBlockRotateXYZPR-dqst": "Ours (NO goal rewards)",
+                      "HandManipulateEggFull-ddpg": "HER (Andrychowicz et al., 2017)",
+                      "HandManipulateEggFull-fwrl": "FWRL (Dhiman et al. 2018)",
+                      "HandManipulateEggFull-dqst": "Ours (goal rewards)",
+                      "HandManipulateEggFullPR-dqst": "Ours (NO goal rewards)",
+                      "HandManipulatePenRotate-ddpg": "HER (Andrychowicz et al., 2017)",
+                      "HandManipulatePenRotate-fwrl": "FWRL (Dhiman et al. 2018)",
+                      "HandManipulatePenRotate-dqst": "Ours (goal rewards)",
+                      "HandManipulatePenRotatePR-dqst": "Ours (NO goal rewards)",
         },
         pattern = "./progress.csv",
         figsize = default_figsize,
-        crop_data = 60):
+        crop_data = 200):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
     data = {d: add_reward_compute_count(

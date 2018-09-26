@@ -25,7 +25,7 @@ git pull
 python <<EOF
 from baselines.her.experiment.train_many import (exp_conf_path_reward_low_thresh_chosen,
                                                  run_one_experiment)
-exp_conf, common_kwargs = exp_conf_path_reward_low_thresh_chosen(num_cpu = 6, gitrev = "6efc1de")
+exp_conf, common_kwargs = exp_conf_path_reward_low_thresh_chosen(num_cpu = 6, gitrev = "1cfa97d")
 experiments = list(exp_conf.items())
 experiment_id = 0 + $PBS_ARRAYID
 print("Running experiment no {}/{} with {}".format(
@@ -74,3 +74,5 @@ echo "end of pbs script"
 # qsub -l nodes=1:ppn=5:gpus=1 -t 1,10,11,12,13,14,15,16,17,2,20,24,28,29,3,4,5,6,7,8,9 pbs/fwrl-her-train-path-rewards-low-thresh-chosen.sh
 # qsub -l nodes=1:ppn=5:gpus=1 -t 4,5,6,9 pbs/fwrl-her-train-path-rewards-low-thresh-chosen.sh
 # qstat -tu dhiman | grep -E '88962|88965|88971|88972|88973' | grep -E 'R|Q' | cut -d] -f 1 | cut -d[ -f 2 | sort -n
+
+# Ran 88978[19], 88979[24,25,27]
