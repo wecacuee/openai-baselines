@@ -69,3 +69,5 @@ echo "end of pbs script"
 # (29, ('HandManipulateBlockRotateXYZPR-v0-dqst', {'env': 'HandManipulateBlockRotateXYZPR-v0', 'loss_term': 'dqst'}))
 # (30, ('HandManipulatePenRotatePR-v0-dqst', {'env': 'HandManipulatePenRotatePR-v0', 'loss_term': 'dqst'}))
 # (31, ('HandManipulateEggFullPR-v0-dqst', {'env': 'HandManipulateEggFullPR-v0', 'loss_term': 'dqst'}))
+# dhiman@fovea:~/.../ext/openai-baselines$ qsub -l nodes=1:ppn=5:gpus=1 -t 28 pbs/fwrl-her-train-path-rewards-low-thresh-noisy-normal.sh
+# 88987[].blindspot

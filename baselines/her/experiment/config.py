@@ -71,7 +71,7 @@ def hashkwargs(l=8, **kwargs):
 class GoalNoise:
     @classmethod
     def options(cls):
-        return ['uniform', 'zero']
+        return ['uniform', 'zero', 'normal']
 
     @classmethod
     def from_str(cls, name):
@@ -86,7 +86,7 @@ class GoalNoise:
         return 0
 
     @staticmethod
-    def gaussian(goal, distance_threshold=0.05):
+    def normal(goal, distance_threshold=0.05):
         return np.random.normal(0, distance_threshold / 3, size=goal.shape)
 
 
