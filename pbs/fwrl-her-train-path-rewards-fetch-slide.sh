@@ -23,9 +23,10 @@ cd $PROJNAME
 git pull
 . setup.sh
 python <<EOF
-from baselines.her.experiment.train_many import (exp_conf_path_reward,
+from baselines.her.experiment.train_many import (exp_conf_path_reward_fetch_slide,
                                                  run_one_experiment)
-exp_conf, common_kwargs = exp_conf_path_reward(num_cpu = 6, gitrev = "0c29724")
+exp_conf, common_kwargs = exp_conf_path_reward_fetch_slide(
+                                num_cpu = 6, gitrev = "0c29724")
 experiments = list(exp_conf.items())
 experiment_id = 0 + $PBS_ARRAYID
 print("Running experiment no {}/{} with {}".format(

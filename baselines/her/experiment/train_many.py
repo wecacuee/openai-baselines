@@ -212,6 +212,17 @@ exp_conf_path_reward_100_epochs = partial(
     distance_threshold = 0.01)
 
 
+exp_conf_path_reward_fetch_slide = partial(
+    expconf,
+    merge(
+        config_vars_to_configs(
+            env = Variations(["FetchSlide-v1"]),
+            loss_term = Variations(["dqst", "ddpg", "fwrl"])),
+        { "FetchSlidePR-v1-dqst" : dict(env="FetchSlidePR-v1",
+                                        loss_term="dqst")}),
+    exp_name = 'path_reward_fetch_slide')
+
+
 train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',
