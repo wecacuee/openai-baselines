@@ -192,7 +192,7 @@ DEFAULT_PARAMS = {
     'intermediate_sampling': 'uniform', # {uniform|middle}'
     'exp_name': '',
     'recompute_rewards': True,
-    'distance_threshold': 0.05,
+    'distance_threshold': -1,
     'goal_noise': GoalNoise.zero,
 }
 
@@ -225,7 +225,7 @@ def preprocess_params(params):
 
 def gym_make_kw(env_name=None, distance_threshold=None):
     env = gym.make(env_name)
-    if hasattr(env.unwrapped, "distance_threshold"):
+    if distance_threshold > 0 and hasattr(env.unwrapped, "distance_threshold"):
         env.unwrapped.distance_threshold = distance_threshold
     return env
 
@@ -242,6 +242,8 @@ def prepare_params(kwargs):
     tmp_env = cached_make_env(kwargs['make_env'])
     assert hasattr(tmp_env, '_max_episode_steps')
     kwargs['T'] = tmp_env._max_episode_steps
+    assert hasattr(tmp_env.unwrapped, 'distance_threshold')
+    kwargs['distance_threshold'] = tmp_env.unwrapped.distance_threshold
     tmp_env.reset()
     kwargs['max_u'] = np.array(kwargs['max_u']) if isinstance(kwargs['max_u'], list) else kwargs['max_u']
     kwargs['gamma'] = 1. - 1. / kwargs['T']

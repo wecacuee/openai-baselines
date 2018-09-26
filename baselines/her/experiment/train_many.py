@@ -223,6 +223,13 @@ exp_conf_path_reward_fetch_slide = partial(
     exp_name = 'path_reward_fetch_slide')
 
 
+exp_conf_path_reward_low_thresh_noisy_normal = partial(
+    exp_conf_path_reward_low_thresh_chosen,
+    exp_name = 'path_reward_low_thresh_noisy_normal',
+    distance_threshold = -1,
+    goal_noise = 'normal')
+
+
 train_loss_term_weights = partial(
     train_many,
     exp_name = 'loss_term_weights',

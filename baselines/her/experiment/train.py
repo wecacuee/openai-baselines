@@ -232,7 +232,7 @@ def launch(
               help='name for the experiment')
 @click.option('--distance_threshold',
               type=float,
-              default=0.05,
+              default=-1,
               help='Distance threshold for the goal achieved computation')
 @click.option('--n_epochs',
               type=int,

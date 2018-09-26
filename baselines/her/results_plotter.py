@@ -116,7 +116,9 @@ def params_diffs(dirs, jsonloader=jsonloadd,
 def moving_average(a, n=5):
     ret = np.cumsum(a)
     ret[n:] = ret[n:] - ret[:-n]
-    return ret / n
+    ma = ret / n
+    ma[:n] = ret[n-1]
+    return ma
 
 
 def plot_results(
@@ -183,7 +185,7 @@ def plot_results(
         for d, label, clr in zip(data_dirs, dir_diffs, COLORS):
             if xdatakey in data[d] and metric in data[d]:
                 ax.plot(data[d][xdatakey],
-                        moving_average_n(data[d][metric].values),
+                        data[d][metric].values,
                         label=translations.get(label, label), color=clr)
         ax.set_xlabel(translations.get(xdatakey, xdatakey))
         ax.set_ylabel(translations.get(metric, metric))
