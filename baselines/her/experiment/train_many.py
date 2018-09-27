@@ -254,4 +254,35 @@ train_intmdt_sampling = partial(
         'middle', 'uniform']))
 
 
+exp_conf_path_reward_low_thresh_alt = partial(
+    expconf,
+    merge(
+        config_vars_to_configs(
+            env = Variations([
+                "FetchReach-v1",
+                "FetchPush-v1",
+                "FetchSlide-v1",
+                "FetchPickAndPlace-v1",
+                "HandReach-v0",
+                "HandManipulateBlockRotateXYZ-v0",
+                "HandManipulatePenRotate-v0",
+                "HandManipulateEggFull-v0",
+            ]),
+            loss_term = Variations(["qlst", "ddpg"])),
+        config_vars_to_configs(
+            env = Variations([
+                "FetchReachPR-v1",
+                "FetchPushPR-v1",
+                "FetchSlidePR-v1",
+                "FetchPickAndPlacePR-v1",
+                "HandReachPR-v0",
+                "HandManipulateBlockRotateXYZPR-v0",
+                "HandManipulatePenRotatePR-v0",
+                "HandManipulateEggFullPR-v0"
+            ]),
+            loss_term = Variations(["dqst"]))),
+    exp_name = 'path_reward_low_thresh_alt',
+    distance_threshold = 0.001)
+
+
 main = partial(train_many_vars, num_cpu = 6)
