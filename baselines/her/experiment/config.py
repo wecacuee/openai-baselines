@@ -267,9 +267,10 @@ def prepare_params(kwargs):
     else:
         kwargs['recompute_rewards'] = True
 
-    kwargs['goal_noise'] = partial(
-        GoalNoise.from_str(kwargs['goal_noise']),
-        distance_threshold=kwargs['distance_threshold'])
+    if isinstance(kwargs['goal_noise'], str):
+        kwargs['goal_noise'] = partial(
+            GoalNoise.from_str(kwargs['goal_noise']),
+            distance_threshold=kwargs['distance_threshold'])
 
     return kwargs
 

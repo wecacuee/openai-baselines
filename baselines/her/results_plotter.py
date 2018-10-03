@@ -87,6 +87,7 @@ def default_figsize(
 def jsonloadd(d, paramsjson='params.json'):
     with open(os.path.join(d, paramsjson)) as f:
         params = json.load(f)
+        params.setdefault("distance_threshold", 0.05)
     return params
 
 
@@ -134,44 +135,61 @@ def plot_results(
                       "test/ag_g_dist": "Distance from goal (test)",
                       "FetchReach-ddpg": "HER",
                       "FetchReach-fwrl": "FWRL",
-                      "FetchReach-dqst": "Ours (goal rewards)",
+                      "FetchReach-dqst": "Ours (with goal rewards)",
                       "FetchReachPR-dqst": "Ours",
                       "FetchPush-ddpg": "HER",
                       "FetchPush-fwrl": "FWRL",
-                      "FetchPush-dqst": "Ours (goal rewards)",
+                      "FetchPush-dqst": "Ours (with goal rewards)",
                       "FetchPushPR-dqst": "Ours",
                       "FetchSlide-ddpg": "HER",
                       "FetchSlide-fwrl": "FWRL",
-                      "FetchSlide-dqst": "Ours (goal rewards)",
+                      "FetchSlide-dqst": "Ours (with goal rewards)",
                       "FetchSlidePR-dqst": "Ours",
                       "FetchPickAndPlace-ddpg": "HER",
                       "FetchPickAndPlace-fwrl": "FWRL",
-                      "FetchPickAndPlace-dqst": "Ours (goal rewards)",
+                      "FetchPickAndPlace-dqst": "Ours (with goal rewards)",
                       "FetchPickAndPlacePR-dqst": "Ours",
                       "HandReach-ddpg": "HER",
                       "HandReach-fwrl": "FWRL",
-                      "HandReach-dqst": "Ours (goal rewards)",
+                      "HandReach-dqst": "Ours (with goal rewards)",
                       "HandReachPR-dqst": "Ours",
                       "HandManipulateBlockRotateXYZ-ddpg": "HER",
                       "HandManipulateBlockRotateXYZ-fwrl": "FWRL",
-                      "HandManipulateBlockRotateXYZ-dqst": "Ours (goal rewards)",
+                      "HandManipulateBlockRotateXYZ-dqst": "Ours (with goal rewards)",
                       "HandManipulateBlockRotateXYZPR-dqst": "Ours",
                       "HandManipulateEggFull-ddpg": "HER",
                       "HandManipulateEggFull-fwrl": "FWRL",
-                      "HandManipulateEggFull-dqst": "Ours (goal rewards)",
+                      "HandManipulateEggFull-dqst": "Ours (with goal rewards)",
                       "HandManipulateEggFullPR-dqst": "Ours",
                       "HandManipulatePenRotate-ddpg": "HER",
                       "HandManipulatePenRotate-fwrl": "FWRL",
-                      "HandManipulatePenRotate-dqst": "Ours (goal rewards)",
+                      "HandManipulatePenRotate-dqst": "Ours (with goal rewards)",
                       "HandManipulatePenRotatePR-dqst": "Ours",
                       "HandManipulatePenRotate-zero-ddpg": "HER",
                       "HandManipulatePenRotate-zero-fwrl": "FWRL",
                       "HandManipulatePenRotatePR-uniform-dqst": "Ours",
+                      "FetchPushPR-605e7e1-ddpg": "Ours (No step loss)",
+                      "FetchPush-6efc1de-ddpg": "HER",
+                      "FetchPushPR-6efc1de-dqst": "Ours",
+                      "FetchPickAndPlacePR-605e7e1-ddpg": "Ours (No step loss)",
+                      "FetchPickAndPlace-6efc1de-ddpg": "HER",
+                      "FetchPickAndPlacePR-6efc1de-dqst": "Ours",
+                      "0.01-FetchPush-6efc1de-ddpg": "HER, $\epsilon = 0.01$",
+                      "0.05-FetchPush-be0910c-ddpg": "HER, $\epsilon = 0.05$",
+                      "0.001-FetchPush-be467df-ddpg": "HER, $\epsilon = 0.001$",
+                      "0.01-6efc1de": "HER, $\epsilon = 0.01$",
+                      "0.05-be0910c": "HER, $\epsilon = 0.05$",
+                      "0.001-be467df": "HER, $\epsilon = 0.001$",
+                      "0.01-FetchPush-6efc1de": "Ours, $\epsilon = 0.01$",
+                      "0.05-FetchPushPR-be0910c": "Ours, $\epsilon = 0.05$",
+                      "0.001-FetchPushPR-be467df": "Ours, $\epsilon = 0.001$",
         },
         pattern = "./progress.csv",
         figsize = default_figsize,
         moving_average_n = partial(moving_average, n = 5),
-        crop_data = 200):
+        #savdir = "/tmp/ablate-ddpg-dqst-low_tresh_chosen-low_thresh_alt-dqst",
+        savdir = "/tmp/ablate-ddpg-with-without-step-loss/",
+        crop_data = 30):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
     data = {d: add_reward_compute_count(
@@ -190,15 +208,22 @@ def plot_results(
                 ax.plot(data[d][xdatakey],
                         data[d][metric].values,
                         label=translations.get(label, label), color=clr)
-        ax.set_xlabel(translations.get(xdatakey, xdatakey))
-        ax.set_ylabel(translations.get(metric, metric))
+        ax.set_xlabel(translations.get(xdatakey, xdatakey), fontsize=12)
+        ax.set_ylabel(translations.get(metric, metric), fontsize=12)
         #ax.set_title(translations.get(metric, metric))
         ax.legend(prop=dict(size=12))
-        for d in data_dirs:
-            path = Path(osp.join(d, xdatakey + "-" + metric + ".pdf"))
-            path.parent.mkdir(parents=True, exist_ok=True)
-            print("Saving plot to {}".format(path))
-            fig.savefig(str(path))
+        if not savdir:
+            for d in data_dirs:
+                path = Path(osp.join(d, xdatakey + "-" + metric + ".pdf"))
+                path.parent.mkdir(parents=True, exist_ok=True)
+                print("Saving plot to {}".format(path))
+                fig.savefig(str(path))
+        else:
+            for label in dir_diffs:
+                path = Path(osp.join(savdir, label + xdatakey + "-" + metric + ".pdf"))
+                path.parent.mkdir(parents=True, exist_ok=True)
+                print("Saving plot to {}".format(path))
+                fig.savefig(str(path))
 
 
 plot_metrics_on_reward_computes = partial(
@@ -233,10 +258,10 @@ def add_reward_compute_count(progress, datadir, jsonloader=jsonloadd):
     return progress
 
 
-
 def plot_results_grouped(rootdir, dir_patterns, **kw):
     for dirp in dir_patterns:
         plot_results(glob_files(rootdir, patterns = [dirp]), **kw)
+
 
 def runall(fs, *a, **kw):
     return [f(*a, **kw) for f in fs]
