@@ -4,6 +4,7 @@ if not __package__ or __package__ == '__main__':
 from functools import partial, reduce, wraps
 from inspect import signature, Parameter
 
+import re
 import sys
 import os
 import os.path as osp
@@ -69,9 +70,8 @@ def common_substr(strs, return_diffs=False):
 
 
 def diff_substr(strs, splitre="[-_/]", joinstr="-"):
-    import re
-    _, diffs = common_substr((re.split(splitre, s) for s in strs),
-                             return_diffs=True)
+    comm, diffs = common_substr((re.split(splitre, s) for s in strs),
+                                return_diffs=True)
     return map(joinstr.join, diffs)
 
 
@@ -120,6 +120,96 @@ def moving_average(a, n=5):
     ma = ret / n
     ma[:n] = ret[n-1]
     return ma
+
+
+class Xargs:
+    def __init__(self, func, expect_args=()):
+        self.func = func
+        self.expect_args = expect_args
+
+
+class EvalDict:
+    def __init__(self, dct):
+        self.dct = dct
+
+    def __getitem__(self, key):
+        v = self.dct[key]
+        return (v.func(**{k: self[k] for k in v.expect_args})
+                if isinstance(v, Xargs) else v)
+
+
+def default_kw(func):
+    return {k: p.default for k, p in signature(func).parameters.items()
+            if p.default is not Parameter.empty}
+
+
+def need_args(func):
+    return [k for k, p in signature(func).parameters.items()
+            if p.kind == Parameter.POSITIONAL_OR_KEYWORD]
+
+
+def eval_kwargs(func, evaldictclass=EvalDict):
+    def_kw = default_kw(func)
+    need_a = need_args(func)
+
+    @wraps(func)
+    def wrapper(*a, **kw):
+        a2kw = dict(zip(need_a[:len(a)], a))
+        kwc = def_kw.copy()
+        kwc.update(a2kw)
+        kwc.update(kw)
+        ekw = evaldictclass(kwc)
+        kwevaled = {k: ekw[k] for k in need_a}
+        return func(**kwevaled)
+
+    return wrapper
+
+
+def mplib_default_figure(
+        subplots_adjust = dict(left=0.175, bottom=0.20, top=0.98, right=0.98),
+        figsize_gen=default_figsize, **kwargs):
+    plt.rc('text', usetex=True)
+    fig = plt.figure(figsize=figsize_gen(), **kwargs)
+    fig.subplots_adjust(**subplots_adjust)
+    return fig
+
+
+def mplib_default_axes(fig, subplots=(1, 1, 1)):
+    return fig.add_subplot(*subplots)
+
+
+@eval_kwargs
+def mplib_plot(line_plots,
+               xlabel,
+               ylabel,
+               fpath,
+               legend_prop = dict(prop=dict(size=12)),
+               xlabel_props = dict(fontsize=12),
+               ylabel_probs = dict(fontsize=12),
+               fig = Xargs(mplib_default_figure),
+               ax = Xargs(mplib_default_axes, ("fig",))):
+    for x, y, kw in line_plots:
+        ax.plot(x, y, **kw)
+    ax.set_xlabel(xlabel, **xlabel_props)
+    ax.set_ylabel(ylabel, **ylabel_probs)
+    ax.legend(**legend_prop)
+    ax.figure.savefig(fpath + ".pdf")
+    plt.close(ax.figure)
+
+
+@eval_kwargs
+def plotly_plot(line_plots,
+                xlabel,
+                ylabel,
+                fpath):
+    import plotly.offline as plt
+    import plotly.graph_objs as go
+    data = [go.Scatter(x = x, y = y, name=kw['label'])
+            for x, y, kw in line_plots]
+    plt.plot(dict(data=data,
+                  layout=go.Layout(xaxis=dict(title=xlabel),
+                                   yaxis=dict(title=ylabel))),
+             filename=(fpath + ".html"), auto_open=False, show_link=False)
 
 
 def plot_results(
@@ -185,11 +275,13 @@ def plot_results(
                       "0.001-FetchPushPR-be467df": "Ours, $\epsilon = 0.001$",
         },
         pattern = "./progress.csv",
-        figsize = default_figsize,
         moving_average_n = partial(moving_average, n = 5),
         #savdir = "/tmp/ablate-ddpg-dqst-low_tresh_chosen-low_thresh_alt-dqst",
-        savdir = "/tmp/ablate-ddpg-with-without-step-loss/",
-        crop_data = 30):
+        #savdir = "/tmp/ablate-ddpg-with-without-step-loss/",
+        savdir = None,
+        crop_data = 30,
+        plot_lines = plotly_plot
+):
 
     f_per_dirs = [glob_files(d, [pattern]) for d in dirs]
     data = {d: add_reward_compute_count(
@@ -198,32 +290,33 @@ def plot_results(
             if len(filenames)}
     data_dirs = sorted(data.keys())
     dir_diffs = list(diff_substr(params_diffs(data_dirs)))
+    uniq_diff_str = "-".join(sorted(set(sum(
+        [re.split("[-_/]", dif) for dif in dir_diffs], []))))
     for metric in metrics:
-        plt.rc('text', usetex=True)
-        fig = plt.figure(figsize=figsize())
-        fig.subplots_adjust(left=0.175, bottom=0.20, top=0.98, right=0.98)
-        ax = fig.add_subplot(1, 1, 1)
+        line_plots = []
         for d, label, clr in zip(data_dirs, dir_diffs, COLORS):
             if xdatakey in data[d] and metric in data[d]:
-                ax.plot(data[d][xdatakey],
-                        data[d][metric].values,
-                        label=translations.get(label, label), color=clr)
-        ax.set_xlabel(translations.get(xdatakey, xdatakey), fontsize=12)
-        ax.set_ylabel(translations.get(metric, metric), fontsize=12)
-        #ax.set_title(translations.get(metric, metric))
-        ax.legend(prop=dict(size=12))
+                line_plots.append(
+                    (data[d][xdatakey],
+                     data[d][metric].values,
+                     dict(label=translations.get(label, label), color=clr)))
+
+        savefig = partial(plot_lines,
+                          line_plots=line_plots,
+                          xlabel=translations.get(xdatakey, xdatakey),
+                          ylabel=translations.get(metric, metric))
         if not savdir:
-            for d in data_dirs:
-                path = Path(osp.join(d, xdatakey + "-" + metric + ".pdf"))
-                path.parent.mkdir(parents=True, exist_ok=True)
-                print("Saving plot to {}".format(path))
-                fig.savefig(str(path))
+            path = Path(osp.join(
+                osp.dirname(dirs[0]),
+                uniq_diff_str, xdatakey + "-" + metric))
+            path.parent.mkdir(parents=True, exist_ok=True)
+            print("Saving plot to {}".format(path))
+            savefig(fpath=str(path))
         else:
-            for label in dir_diffs:
-                path = Path(osp.join(savdir, label + xdatakey + "-" + metric + ".pdf"))
-                path.parent.mkdir(parents=True, exist_ok=True)
-                print("Saving plot to {}".format(path))
-                fig.savefig(str(path))
+            path = Path(osp.join(savdir, label + xdatakey + "-" + metric))
+            path.parent.mkdir(parents=True, exist_ok=True)
+            print("Saving plot to {}".format(path))
+            savefig(fpath=str(path))
 
 
 plot_metrics_on_reward_computes = partial(
